@@ -109,7 +109,7 @@ Hasil build frontend ada di folder `dist/`. Untuk produksi, konfigurasi web serv
 Setelah menjalankan seeder, akun admin default:
 
 ```
-Email: admin@example.com
+Email: admin@tokoonline.com
 Password: password
 ```
 

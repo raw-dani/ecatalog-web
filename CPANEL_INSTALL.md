@@ -1,496 +1,450 @@
-# Panduan Install E-Catalog di cPanel
+# Panduan Deploy ke cPanel
 
-Panduan ini akan membantu Anda menginstall aplikasi E-Catalog (Laravel Backend + React Frontend) di hosting cPanel.
+Aplikasi E-Catalog ini terdiri dari 3 bagian yang harus di-deploy secara terpisah:
 
-## Prerequisites
-
-- Hosting dengan cPanel yang mendukung:
-  - PHP 8.1 atau higher
-  - MySQL/MariaDB
-  - Composer
-  - Node.js & npm (via Node.js Selector di cPanel)
-  - SSH Access (opsional tapi direkomendasikan)
-- Domain atau subdomain yang mengarah ke hosting
+1. **Backend API** (Laravel) → `https://api-ecatalog.hanjayateknologi.com`
+2. **Frontend Customer** (React) → `https://ecatalog.hanjayateknologi.com`
+3. **Admin Panel** (React) → `http://admin-ecatalog.hanjayateknologi.com`
 
 ---
 
-## 1. Persiapan Database
+## 1. Persiapan di cPanel
 
-1. Login ke cPanel
-2. Buka **MySQL® Database Wizard**
-3. Buat database baru:
-   - Nama database: `ecatalog_db` (atau nama lain)
-4. Buat database user:
-   - Username: `ecatalog_user`
-   - Password: (buat password yang kuat)
-5. Add user to database: beri permission **ALL PRIVILEGES**
-6. Catat credentials ini:
+### 1.1 Buat Subdomain
+
+Buka **cPanel → Domains → Subdomains** dan buat 3 subdomain:
+
+| Subdomain | Document Root |
+|-----------|---------------|
+| `api-ecatalog` | `public_html/api-ecatalog/public` |
+| `ecatalog` | `public_html/ecatalog` |
+| `admin-ecatalog` | `public_html/admin-ecatalog` |
+
+### 1.2 Buat Database MySQL
+
+Buka **cPanel → MySQL Databases**:
+
+1. Buat database baru: `ecatalog_db`
+2. Buat user baru: `ecatalog_user` (atau sesuaikan)
+3. Set password untuk user
+4. Tambahkan user ke database dengan semua privileges
+
+Catat detail koneksi:
+- Database: `cpaneluser_ecatalog_db`
+- Username: `cpaneluser_ecatalog_user`
+- Password: `********`
+- Host: `localhost`
+
+### 1.3 Upload File via File Manager atau FTP
+
+#### Upload Backend API
+
+1. Upload seluruh isi folder `backend/` ke `public_html/api-ecatalog/`
+2. Pastikan file `.env` ada di root backend (`public_html/api-ecatalog/.env`)
+3. Pastikan folder `storage/` dapat ditulis (chmod 755 atau 775)
+4. Pastikan folder `bootstrap/cache/` dapat ditulis
+5. **Penting:** Document root subdomain `api-ecatalog` harus mengarah ke `public_html/api-ecatalog/public/`, bukan `public_html/api-ecatalog/`. Jika tidak, akses URL akan menghasilkan error 404.
+
+#### Upload Frontend Customer
+
+1. Build frontend terlebih dahulu:
+   ```bash
+   cd frontend
+   npm run build
    ```
-   Database Name: username_ecatalog_db
-   Username: username_ecatalog_user
-   Password: your_password
+2. Upload seluruh isi folder `frontend/dist/` ke `public_html/ecatalog/`
+
+#### Upload Admin Panel
+
+1. Build admin-frontend terlebih dahulu:
+   ```bash
+   cd admin-frontend
+   npm run build
    ```
+2. Upload seluruh isi folder `admin-frontend/dist/` ke `public_html/admin-ecatalog/`
 
 ---
 
-## 2. Upload Files ke cPanel
+## 2. Konfigurasi Environment Backend
 
-### Opsi A: Menggunakan Git (Rekomendasi jika SSH tersedia)
-
-```bash
-# Via SSH, navigate ke public_html
-cd ~/public_html
-
-# Clone repository
-git clone <repository-url> .
-
-# atau clone ke folder terpisah
-git clone <repository-url> ecatalog
-```
-
-### Opsi B: Menggunakan File Manager
-
-1. Upload file backend sebagai ZIP dari komputer Anda:
-   - `backend.zip` (isi folder backend)
-2. Upload file frontend sebagai ZIP:
-   - `frontend.zip` (isi folder frontend)
-   - `admin-frontend.zip` (isi folder admin-frontend)
-3. Extract semua ZIP di `public_html`
-4. Struktur folder harus seperti ini:
-   ```
-   public_html/
-   ├── backend/
-   ├── frontend/
-   ├── admin-frontend/
-   ```
-
-### Opsi C: Menggunakan FTP Client (FileZilla, dll)
-
-Upload semua file project ke direktori `public_html` di server.
-
----
-
-## 3. Setup Backend (Laravel)
-
-### 3.1 Install Dependencies
-
-Via SSH:
-```bash
-cd ~/public_html/backend
-composer install --no-dev --optimize-autoloader
-```
-
-Via cPanel Terminal (jika SSH tidak tersedia):
-```bash
-cd backend
-composer install --no-dev --optimize-autoloader
-```
-
-### 3.2 Konfigurasi Environment
-
-Copy file `.env.example` menjadi `.env`:
-
-Via File Manager:
-- Copy `.env.example` → `.env`
-
-Via SSH/Terminal:
-```bash
-cp .env.example .env
-```
-
-Edit file `.env` dengan settings database dan aplikasi:
+Edit file `.env` di `public_html/api-ecatalog/.env`:
 
 ```env
-APP_NAME="E-Catalog"
+APP_NAME=E-Catalog API
 APP_ENV=production
+APP_KEY=base64:YOUR_GENERATED_KEY_HERE
 APP_DEBUG=false
-APP_URL=https://domain-anda.com
+APP_URL=https://api-ecatalog.hanjayateknologi.com
 
-# Database
 DB_CONNECTION=mysql
 DB_HOST=localhost
 DB_PORT=3306
-DB_DATABASE=username_ecatalog_db
-DB_USERNAME=username_ecatalog_user
-DB_PASSWORD=your_password
+DB_DATABASE=cpaneluser_ecatalog_db
+DB_USERNAME=cpaneluser_ecatalog_user
+DB_PASSWORD=your_database_password
 
-# Storage
-FILESYSTEM_DISK=public
-
-# Session & Cache (gunakan file untuk shared hosting)
-SESSION_DRIVER=file
+BROADCAST_DRIVER=log
 CACHE_DRIVER=file
+FILESYSTEM_DISK=local
 QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+MAIL_MAILER=log
+MAIL_FROM_ADDRESS=noreply@hanjayateknologi.com
+MAIL_FROM_NAME=E-Catalog
+
+FRONTEND_URL=https://ecatalog.hanjayateknologi.com
+ADMIN_URL=http://admin-ecatalog.hanjayateknologi.com
 ```
 
-### 3.3 Buat Storage Link
+### Generate APP_KEY
+
+Setelah mengedit `.env`, jalankan:
 
 ```bash
-# Via SSH/Terminal
-php artisan storage:link
-```
-
-Jika error, buat folder `public/storage` secara manual:
-```bash
-mkdir -p public/storage
-ln -s ../storage/app/public public/storage
-```
-
-### 3.4 Setup Storage Permissions
-
-```bash
-# Via SSH/Terminal
-chmod -R 755 storage
-chmod -R 755 bootstrap/cache
-```
-
-### 3.5 Run Migrations & Seeders
-
-```bash
-php artisan migrate --force
-php artisan db:seed --force
-```
-
-### 3.6 Generate Application Key
-
-```bash
-php artisan key:generate --force
-```
-
-### 3.7 Cache Configuration (Opsional - untuk performance)
-
-```bash
+cd public_html/api-ecatalog
+php artisan key:generate
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 ```
 
-### 3.8 Setup Folder Permissions untuk Upload
-
-```bash
-chmod -R 755 storage/app/public
-```
-
 ---
 
-## 4. Build & Upload Frontend
+## 3. Konfigurasi Vite untuk Produksi
 
-### 4.1 Build Frontend (Local/Laptop)
+### Frontend (`frontend/vite.config.js`)
 
-Di komputer Anda:
+Untuk development, proxy API ke backend lokal. Untuk produksi, tidak perlu diubah (base URL default `/` sudah benar untuk subdomain):
+
+```js
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+    },
+    '/storage': {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+    },
+  },
+},
+```
+
+Build untuk produksi:
 
 ```bash
-# Frontend customer
 cd frontend
-npm install
-npm run build
-
-# Admin frontend
-cd ../admin-frontend
-npm install
 npm run build
 ```
 
-### 4.2 Upload Build Results
+Hasil build akan ada di `frontend/dist/`. Upload ke `public_html/ecatalog/`.
 
-Setelah build selesai, upload folder `dist` (atau `build`) dari kedua frontend ke server:
+### Admin Frontend (`admin-frontend/vite.config.js`)
 
-**Struktur yang diharapkan:**
+Sama seperti frontend customer:
+
+```js
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+    },
+    '/storage': {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+    },
+  },
+},
 ```
-public_html/
-├── backend/
-├── frontend/
-│   ├── dist/           # Upload isi folder dist/ ke public_html/frontend
-│   └── ...
-└── admin-frontend/
-    ├── dist/           # Upload isi folder dist/ ke public_html/admin-frontend
-    └── ...
+
+Build untuk produksi:
+
+```bash
+cd admin-frontend
+npm run build
 ```
 
-### 4.3 Konfigurasi Base URL Frontend
-
-Setelah upload, edit file konfigurasi di:
-
-**Frontend (`frontend/dist/assets/`):**
-- Cari file `.js` yang berisi base API URL
-- Sesuaikan dengan URL backend Anda (contoh: `/api`)
-
-**Admin Frontend (`admin-frontend/dist/assets/`):**
-- Lakukan hal yang sama
-
-Catatan: Jika build sudah menggunakan relative path, Anda mungkin tidak perlu merubah apapun.
+Hasil build akan ada di `admin-frontend/dist/`. Upload ke `public_html/admin-ecatalog/`.
 
 ---
 
-## 5. Setup Backend Routes di cPanel
+## 4. Setup Database
 
-### Opsi A: Menggunakan Subdomain (Rekomendasi)
+### 4.1 Jalankan Migrasi dan Seeder
 
-**Untuk Customer Frontend:**
-1. cPanel → **Subdomains**
-   - Subdomain: `shop` (atau kosongkan untuk main domain)
-   - Document Root: `public_html/frontend/dist`
-   - Create
+SSH ke server (atau gunakan cPanel Terminal jika tersedia):
 
-**Untuk Admin Panel:**
-1. cPanel → **Subdomains**
-   - Subdomain: `admin`
-   - Document Root: `public_html/admin-frontend/dist`
-   - Create
+```bash
+cd public_html/api-ecatalog
+php artisan migrate --force
+php artisan db:seed --force
+```
 
-**Untuk API Backend:**
-1. cPanel → **Subdomains**
-   - Subdomain: `api`
-   - Document Root: `public_html/backend/public`
-   - Create
+### 4.2 Verifikasi
 
-### Opsi B: Menggunakan Folder di Domain Utama
-
-Jika tidak ingin menggunakan subdomain:
-
-1. Frontend → `public_html/shop` (upload dist ke sini)
-2. Admin → `public_html/admin` (upload dist ke sini)
-3. Backend tetap di `public_html/backend`
-
-**Catatan:** Anda perlu mengatur `.htaccess` di masing-masing folder agar tidak bentrok.
+Buka `https://api-ecatalog.hanjayateknologi.com/api/settings` di browser untuk memastikan API berjalan.
 
 ---
 
-## 6. Konfigurasi Backend URL
+## 5. Konfigurasi SSL (HTTPS)
 
-Edit file `.env` di backend untuk menambahkan allowed origins:
+### 5.1 Untuk Subdomain
+
+Di cPanel, buka **SSL/TLS** atau **Let's Encrypt** (jika tersedia):
+
+1. Aktifkan SSL untuk `api-ecatalog.hanjayateknologi.com`
+2. Aktifkan SSL untuk `ecatalog.hanjayateknologi.com`
+3. Untuk `admin-ecatalog.hanjayateknologi.com`, disarankan juga menggunakan HTTPS
+
+### 5.2 Force HTTPS di Laravel
+
+Di `.env` backend, pastikan:
 
 ```env
-APP_URL=https://domain-anda.com
-
-# Jika menggunakan subdomain
-# APP_URL=https://domain-anda.com
-# FRONTEND_URL=https://shop.domain-anda.com
-# ADMIN_URL=https://admin.domain-anda.com
-
-# CORS Settings (jika diperlukan tambahkan di cors.php)
-# Implementasi CORS bisa ditambahkan di middleware Laravel
+APP_URL=https://api-ecatalog.hanjayateknologi.com
 ```
 
-### 6.1 Setup CORS (jika frontend dan backend di domain berbeda)
-
-Buat middleware baru di Laravel atau edit `app/Http/Middleware/Cors.php`:
+Dan tambahkan di `bootstrap/app.php` atau `app/Providers/AppServiceProvider.php`:
 
 ```php
-// app/Http/Middleware/Cors.php
-namespace App\Http\Middleware;
-
-use Closure;
-
-class Cors
+public function boot(): void
 {
-    public function handle($request, Closure $next)
-    {
-        $allowedOrigins = [
-            'https://domain-anda.com',
-            'https://shop.domain-anda.com',
-            'https://admin.domain-anda.com',
-        ];
-
-        $origin = $request->headers->get('origin');
-        
-        if (in_array($origin, $allowedOrigins)) {
-            header("Access-Control-Allow-Origin: $origin");
-        }
-
-        return $next($request);
+    if (config('app.env') === 'production') {
+        \Illuminate\Support\Facades\URL::forceScheme('https');
     }
 }
 ```
 
-Register middleware di `app/Http/Kernel.php`:
+---
+
+## 6. Konfigurasi CORS
+
+Pastikan CORS diizinkan untuk domain frontend dan admin. Edit `config/cors.php`:
+
 ```php
-protected $middleware = [
-    // ...
-    \App\Http\Middleware\Cors::class,
-];
+'paths' => ['api/*'],
+'allowed_origins' => [
+    'https://ecatalog.hanjayateknologi.com',
+    'https://admin-ecatalog.hanjayateknologi.com',
+    'http://admin-ecatalog.hanjayateknologi.com',
+],
+'allowed_methods' => ['*'],
+'allowed_headers' => ['*'],
+'credentials' => true,
 ```
 
 ---
 
-## 7. Setup Supervisor untuk Queue (Opsional)
+## 7. Struktur File di cPanel
 
-Jika ingin menggunakan queue untuk email/notification:
-
-### Via cPanel:
-1. Buka **Cron Jobs**
-2. Tambahkan cron job:
-   ```
-   * * * * * /usr/local/bin/php /home/username/public_html/backend/artisan queue:work --sleep=3 --tries=3
-   ```
-
----
-
-## 8. Konfigurasi SSL (HTTPS)
-
-1. Di cPanel, buka **SSL/TLS Status**
-2. Enable SSL untuk:
-   - Domain utama
-   - Subdomain `shop`
-   - Subdomain `admin`
-   - Subdomain `api`
-
-Pastikan URL di `.env` menggunakan `https://`:
-```env
-APP_URL=https://domain-anda.com
+```
+public_html/
+├── api-ecatalog/          ← Backend Laravel API (document root: public/)
+│   ├── app/
+│   ├── bootstrap/
+│   ├── config/
+│   ├── database/
+│   ├── public/            ← Document root subdomain (index.php + .htaccess berada di sini)
+│   │   ├── index.php
+│   │   └── .htaccess
+│   ├── resources/
+│   ├── routes/
+│   ├── storage/
+│   ├── vendor/
+│   ├── .env
+│   └── composer.json
+│
+├── ecatalog/              ← Frontend Customer (React)
+│   ├── index.html
+│   ├── assets/
+│   │   ├── index-XXXXX.js
+│   │   └── index-XXXXX.css
+│   └── ...
+│
+└── admin-ecatalog/        ← Admin Panel (React)
+    ├── index.html
+    ├── assets/
+    │   ├── index-XXXXX.js
+    │   └── index-XXXXX.css
+    └── ...
 ```
 
 ---
 
-## 9. Testing
+## 8. Konfigurasi .htaccess (Apache)
 
-### Test Backend API:
-```
-https://api.domain-anda.com/api/settings
-```
-Harus return JSON settings
+### Untuk Backend (`public_html/api-ecatalog/public/.htaccess`)
 
-### Test Customer Frontend:
-```
-https://shop.domain-anda.com
-```
-Harus menampilkan halaman beranda
+Pastikan file `.htaccess` ada dan berisi:
 
-### Test Admin Panel:
+```apache
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
 ```
-https://admin.domain-anda.com
+
+### Untuk Frontend Customer (`public_html/ecatalog/.htaccess`)
+
+Jika menggunakan SPA React Router, buat `.htaccess`:
+
+```apache
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteRule ^index\.html$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+</IfModule>
 ```
-Harus menampilkan halaman login admin
+
+### Untuk Admin Panel (`public_html/admin-ecatalog/.htaccess`)
+
+Sama seperti frontend customer:
+
+```apache
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteRule ^index\.html$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+</IfModule>
+```
+
+---
+
+## 9. Verifikasi Deploy
+
+### 9.1 Cek Backend API
+
+Buka di browser:
+- `https://api-ecatalog.hanjayateknologi.com/api/settings` → Harusnya mengembalikan data pengaturan toko
+- `https://api-ecatalog.hanjayateknologi.com/api/products/featured` → Harusnya mengembalikan produk unggulan
+- `https://api-ecatalog.hanjayateknologi.com/api/categories` → Harusnya mengembalikan daftar kategori
+
+### 9.2 Cek Frontend Customer
+
+Buka di browser:
+- `https://ecatalog.hanjayateknologi.com` → Halaman beranda harus tampil
+- Klik produk, tambah ke keranjang, checkout → Pastikan API terhubung
+
+### 9.3 Cek Admin Panel
+
+Buka di browser:
+- `http://admin-ecatalog.hanjayateknologi.com` → Halaman login admin harus tampil
+- Login dengan kredensial admin → Dashboard harus tampil
 
 ---
 
 ## 10. Troubleshooting
 
-### Error 500 Internal Server Error
+### Error 500 di Backend
 
-1. Cek error log di cPanel:
-   - **Metrics → Errors**
-   - Atau `~/logs/error_log`
+```bash
+cd public_html/api-ecatalog
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+tail -f storage/logs/laravel.log
+```
 
-2. Pastikan `.env` sudah dikonfigurasi dengan benar
-3. Cek permissions:
-   ```bash
-   chmod -R 755 storage
-   chmod -R 755 bootstrap/cache
-   ```
+### Error 404 di Backend API
 
-### Error 404 / Route Not Found
+Ini terjadi karena document root subdomain tidak mengarah ke folder `public/` Laravel.
 
-1. Pastikan `.htaccess` ada di folder `backend/public/`
-2. Pastikan `mod_rewrite` enabled di Apache
+**Solusi:**
+1. Di cPanel → Subdomains, edit subdomain `api-ecatalog`
+2. Ubah document root menjadi `public_html/api-ecatalog/public`
+3. Save
 
-### Assets Tidak Load (CSS/JS broken)
-
-1. Pastikan base URL di frontend sesuai
-2. Clear cache:
-   ```bash
-   php artisan config:clear
-   php artisan cache:clear
-   ```
-
-### Database Connection Error
-
-1. Cek kredensial database di `.env`
-2. Pastikan user sudah diberikan ALL PRIVILEGES
-3. Test koneksi database via cPanel **phpMyAdmin**
+Atau jika tidak bisa mengubah document root, pindahkan isi folder `public/` ke root subdomain dan sesuaikan path di `index.php`:
+- `__DIR__.'/../storage/...'` → `__DIR__.'/storage/...`
+- `__DIR__.'/../vendor/...'` → `__DIR__.'/vendor/...`
+- `__DIR__.'/../bootstrap/...'` → `__DIR__.'/bootstrap/...`
 
 ### CORS Error
 
-1. Pastikan CORS middleware sudah diimplementasikan
-2. Cek `APP_URL` di `.env`
-3. Pastikan allowed origins sudah sesuai
+Periksa `config/cors.php` sudah mencakup semua domain frontend.
 
-### Image/File Upload Tidak Bekerja
+### Database Connection Error
 
-1. Cek permissions folder:
-   ```bash
-   chmod -R 755 storage/app/public
-   ```
-2. Pastikan storage link sudah dibuat:
-   ```bash
-   php artisan storage:link
-   ```
-3. Di cPanel, cek **Disk Usage** untuk memastikan storage tidak penuh
+Pastikan `.env` sudah benar dan database user memiliki akses ke database.
+
+### Gambar Tidak Muncul
+
+```bash
+cd public_html/api-ecatalog
+php artisan storage:link
+```
+
+Pastikan folder `storage/app/public` memiliki permission yang benar (755 atau 775).
 
 ---
 
-## 11. Maintenance
+## 11. Update Aplikasi di Production
 
-### Update Aplikasi
+### Update Backend
 
 ```bash
-cd ~/public_html/backend
+cd public_html/api-ecatalog
 git pull origin main
-composer install --no-dev --optimize-autoloader
+composer install --optimize-autoloader --no-dev
 php artisan migrate --force
 php artisan config:cache
+php artisan route:cache
 php artisan view:cache
 ```
 
-### Backup Database
+### Update Frontend Customer
 
-Via cPanel:
-1. **phpMyAdmin** → Select database → Export
-2. Atau via command:
-   ```bash
-   mysqldump -u username_ecatalog_user -p username_ecatalog_db > backup.sql
-   ```
+```bash
+cd frontend
+npm install
+npm run build
+# Upload ulang isi folder dist/ ke public_html/ecatalog/
+```
 
-### Backup Files
+### Update Admin Panel
 
-Download via File Manager atau FTP:
-- `public_html/backend` (tanpa vendor)
-- `public_html/frontend/dist`
-- `public_html/admin-frontend/dist`
-- Database SQL export
-
----
-
-## 12. Security Checklist
-
-- [ ] Set `APP_DEBUG=false` di production
-- [ ] Set `APP_ENV=production`
-- [ ] Gunakan HTTPS (SSL)
-- [ ] Jangan commit file `.env` ke version control
-- [ ] Set strong password untuk database user
-- [ ] Limit PHP execution di folder uploads (jika ada)
-- [ ] Enable cPanel **Hotlink Protection**
-- [ ] Backup rutin database dan files
+```bash
+cd admin-frontend
+npm install
+npm run build
+# Upload ulang isi folder dist/ ke public_html/admin-ecatalog/
+```
 
 ---
 
-## Catatan Penting untuk Shared Hosting
+## 12. Keamanan Produksi
 
-1. **Composer Memory Limit**: Jika mengalami error saat `composer install`, jalankan:
-   ```bash
-   COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader
-   ```
-
-2. **Queue Worker**: Di shared hosting,gunakan cron job untuk queue instead of Supervisor:
-   ```bash
-   * * * * * /usr/local/bin/php /home/username/public_html/backend/artisan queue:work --sleep=3 --tries=3 --stop-when-empty
-   ```
-
-3. **Node.js**: Pastikan Node.js version sesuai dengan requirements package.json. Check via cPanel **Node.js Selector**.
-
-4. **File Upload Size**: Jika perlu upload file besar, edit `php.ini` di cPanel:
-   ```
-   upload_max_filesize = 10M
-   post_max_size = 10M
-   memory_limit = 256M
-   ```
-
----
-
-## Support
-
-Jika mengalami kendala, periksa:
-1. Error logs di cPanel
-2. Browser Console (F12) untuk error JavaScript
-3. Network tab untuk API errors
-4. Laravel log: `storage/logs/laravel.log`
+1. **Nonaktifkan debug mode** — Pastikan `APP_DEBUG=false` di `.env`
+2. **Gunakan HTTPS** — Semua subdomain harus menggunakan SSL
+3. **Regenerate APP_KEY** — Jangan gunakan APP_KEY yang sama untuk development dan production
+4. **Batasi akses file .env** — Pastikan `.env` tidak dapat diakses dari web
+5. **Regular backup** — Backup database dan file secara berkala
+6. **Update dependencies** — Rutin update composer dan npm packages
