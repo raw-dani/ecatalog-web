@@ -4,6 +4,8 @@ build/
 vendor/
 .env
 .env.*
+!.env.production
+!.env.development
 !.env.example
 storage/
 bootstrap/cache/

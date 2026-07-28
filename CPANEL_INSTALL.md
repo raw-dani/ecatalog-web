@@ -114,23 +114,32 @@ php artisan view:cache
 
 ## 3. Konfigurasi Vite untuk Produksi
 
-### Frontend (`frontend/vite.config.js`)
+### Konfigurasi Environment untuk Produksi
 
-Untuk development, proxy API ke backend lokal. Untuk produksi, tidak perlu diubah (base URL default `/` sudah benar untuk subdomain):
+Buat file `.env.production` di masing-masing folder frontend:
 
-```js
-server: {
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8000',
-      changeOrigin: true,
-    },
-    '/storage': {
-      target: 'http://localhost:8000',
-      changeOrigin: true,
-    },
-  },
-},
+**Frontend (`frontend/.env.production`):**
+```
+VITE_API_URL=https://api-ecatalog.hanjayateknologi.com
+```
+
+**Admin Frontend (`admin-frontend/.env.production`):**
+```
+VITE_API_URL=https://api-ecatalog.hanjayateknologi.com
+```
+
+File `.env.production` ini berisi URL API yang digunakan saat produksi. Vite secara otomatis memuat file ini saat `npm run build` dijalankan.
+
+Untuk development, buat file `.env.development`:
+
+**Frontend (`frontend/.env.development`):**
+```
+VITE_API_URL=http://localhost:8000
+```
+
+**Admin Frontend (`admin-frontend/.env.development`):**
+```
+VITE_API_URL=http://localhost:8000
 ```
 
 Build untuk produksi:
@@ -141,34 +150,6 @@ npm run build
 ```
 
 Hasil build akan ada di `frontend/dist/`. Upload ke `public_html/ecatalog/`.
-
-### Admin Frontend (`admin-frontend/vite.config.js`)
-
-Sama seperti frontend customer:
-
-```js
-server: {
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8000',
-      changeOrigin: true,
-    },
-    '/storage': {
-      target: 'http://localhost:8000',
-      changeOrigin: true,
-    },
-  },
-},
-```
-
-Build untuk produksi:
-
-```bash
-cd admin-frontend
-npm run build
-```
-
-Hasil build akan ada di `admin-frontend/dist/`. Upload ke `public_html/admin-ecatalog/`.
 
 ---
 
@@ -372,6 +353,22 @@ php artisan view:clear
 php artisan route:clear
 tail -f storage/logs/laravel.log
 ```
+
+### Error 404 di API (Frontend tidak bisa akses backend)
+
+Ini terjadi karena frontend membuat request ke `/api/...` yang resolve ke domain frontend itu sendiri, bukan ke domain API.
+
+**Solusi:**
+1. Pastikan file `.env.production` ada di folder `frontend/` dan `admin-frontend/` dengan isi:
+   ```
+   VITE_API_URL=https://api-ecatalog.hanjayateknologi.com
+   ```
+2. Rebuild frontend:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+3. Upload ulang isi folder `dist/` ke `public_html/ecatalog/`
 
 ### Error 404 di Backend API
 
