@@ -120,13 +120,15 @@ Buat file `.env.production` di masing-masing folder frontend:
 
 **Frontend (`frontend/.env.production`):**
 ```
-VITE_API_URL=https://api-ecatalog.hanjayateknologi.com
+VITE_API_URL=https://api-ecatalog.hanjayateknologi.com/api
 ```
 
 **Admin Frontend (`admin-frontend/.env.production`):**
 ```
-VITE_API_URL=https://api-ecatalog.hanjayateknologi.com
+VITE_API_URL=https://api-ecatalog.hanjayateknologi.com/api
 ```
+
+> **Penting:** Sertakan `/api` di akhir URL. Laravel routes API menggunakan prefix `/api`, jadi request frontend harus ke `/api/categories`, bukan `/categories`.
 
 File `.env.production` ini berisi URL API yang digunakan saat produksi. Vite secara otomatis memuat file ini saat `npm run build` dijalankan.
 
@@ -134,12 +136,12 @@ Untuk development, buat file `.env.development`:
 
 **Frontend (`frontend/.env.development`):**
 ```
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8000/api
 ```
 
 **Admin Frontend (`admin-frontend/.env.development`):**
 ```
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8000/api
 ```
 
 Build untuk produksi:
@@ -207,7 +209,8 @@ public function boot(): void
 Pastikan CORS diizinkan untuk domain frontend dan admin. Edit `config/cors.php`:
 
 ```php
-'paths' => ['api/*'],
+'paths' => ['api/*', 'admin/*', 'sanctum/csrf-cookie'],
+'allowed_methods' => ['*'],
 'allowed_origins' => [
     'https://ecatalog.hanjayateknologi.com',
     'https://admin-ecatalog.hanjayateknologi.com',
@@ -215,8 +218,12 @@ Pastikan CORS diizinkan untuk domain frontend dan admin. Edit `config/cors.php`:
 ],
 'allowed_methods' => ['*'],
 'allowed_headers' => ['*'],
-'credentials' => true,
+'exposed_headers' => [],
+'max_age' => 0,
+'supports_credentials' => false,
 ```
+
+> **Penting:** Setelah mengubah `config/cors.php`, jalankan `php artisan config:clear` di server agar perubahan diterapkan.
 
 ---
 
@@ -354,14 +361,21 @@ php artisan route:clear
 tail -f storage/logs/laravel.log
 ```
 
+### Error CORS (Cross-Origin Resource Sharing)
+
+Jika browser melaporkan error CORS, pastikan:
+1. `config/cors.php` sudah mencakup domain frontend di `allowed_origins`
+2. Jalankan `php artisan config:clear` di server setelah mengubah CORS config
+3. Pastikan `HandleCors` middleware ada di `app/Http/Kernel.php` (global middleware stack)
+
 ### Error 404 di API (Frontend tidak bisa akses backend)
 
-Ini terjadi karena frontend membuat request ke `/api/...` yang resolve ke domain frontend itu sendiri, bukan ke domain API.
+Ini terjadi karena frontend membuat request ke URL tanpa prefix `/api`.
 
 **Solusi:**
 1. Pastikan file `.env.production` ada di folder `frontend/` dan `admin-frontend/` dengan isi:
    ```
-   VITE_API_URL=https://api-ecatalog.hanjayateknologi.com
+   VITE_API_URL=https://api-ecatalog.hanjayateknologi.com/api
    ```
 2. Rebuild frontend:
    ```bash
