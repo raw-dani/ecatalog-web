@@ -1,6 +1,20 @@
-import { useState } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { resetPassword } from '../../services/adminService';
+
+function getPasswordStrength(password) {
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
+  if (/[0-9]/.test(password)) score += 1;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 1;
+
+  if (score <= 1) return { label: 'Lemah', color: 'bg-danger-500', textColor: 'text-danger-600', width: '25%' };
+  if (score <= 2) return { label: 'Cukup', color: 'bg-warning-500', textColor: 'text-warning-600', width: '50%' };
+  if (score <= 3) return { label: 'Sedang', color: 'bg-primary-500', textColor: 'text-primary-600', width: '75%' };
+  return { label: 'Kuat', color: 'bg-success-500', textColor: 'text-success-600', width: '100%' };
+}
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -13,6 +27,13 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const passwordRef = useRef(null);
+
+  const strength = getPasswordStrength(password);
+
+  useEffect(() => {
+    passwordRef.current?.focus();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +48,12 @@ export default function ResetPassword() {
 
     if (password !== passwordConfirmation) {
       setMessage({ type: 'error', text: 'Konfirmasi password tidak cocok' });
+      setLoading(false);
+      return;
+    }
+
+    if (strength.label === 'Lemah') {
+      setMessage({ type: 'error', text: 'Password terlalu lemah. Gunakan kombinasi huruf besar, huruf kecil, angka, dan simbol.' });
       setLoading(false);
       return;
     }
@@ -50,10 +77,10 @@ export default function ResetPassword() {
 
   if (!token || !email) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
           <h1 className="text-2xl font-bold mb-4">Link Tidak Valid</h1>
-          <p className="text-gray-500 mb-4">Link reset password tidak valid atau sudah kadaluarsa.</p>
+          <p className="text-slate-500 mb-4">Link reset password tidak valid atau sudah kadaluarsa.</p>
           <Link to="/forgot-password" className="text-primary-600 hover:underline">
             Minta link baru
           </Link>
@@ -63,10 +90,10 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold mb-2 text-center">Reset Password</h1>
-        <p className="text-gray-500 text-sm text-center mb-6">
+        <p className="text-slate-500 text-sm text-center mb-6">
           Buat password baru untuk akun {email}
         </p>
 
@@ -83,18 +110,20 @@ export default function ResetPassword() {
             <label className="block text-sm font-medium mb-1">Password Baru</label>
             <div className="relative">
               <input
+                ref={passwordRef}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border rounded px-3 py-2 pr-10"
+                className="w-full border border-slate-300 rounded-xl px-3 py-2 pr-10"
                 placeholder="Minimal 8 karakter"
                 required
                 minLength={8}
+                autoComplete="new-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 {showPassword ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,6 +137,43 @@ export default function ResetPassword() {
                 )}
               </button>
             </div>
+            {/* Password Strength Indicator */}
+            {password.length > 0 && (
+              <div className="mt-2">
+                <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-300 ${strength.color}`} style={{ width: strength.width }} />
+                </div>
+                <p className={`text-xs mt-1 ${strength.textColor}`}>
+                  Kekuatan password: {strength.label}
+                </p>
+                <ul className="text-xs text-slate-400 mt-1 space-y-1">
+                  <li className={`flex items-center gap-2 ${password.length >= 8 ? 'text-success-600' : ''}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    Minimal 8 karakter
+                  </li>
+                  <li className={`flex items-center gap-2 ${/[a-z]/.test(password) && /[A-Z]/.test(password) ? 'text-success-600' : ''}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    Huruf besar & kecil
+                  </li>
+                  <li className={`flex items-center gap-2 ${/[0-9]/.test(password) ? 'text-success-600' : ''}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    Angka
+                  </li>
+                  <li className={`flex items-center gap-2 ${/[^a-zA-Z0-9]/.test(password) ? 'text-success-600' : ''}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    Simbol (!@#$%^&*)
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Konfirmasi Password Baru</label>
@@ -115,15 +181,21 @@ export default function ResetPassword() {
               type="password"
               value={passwordConfirmation}
               onChange={(e) => setPasswordConfirmation(e.target.value)}
-              className="w-full border rounded px-3 py-2"
+              className={`w-full border border-slate-300 rounded-xl px-3 py-2 ${
+                passwordConfirmation && password !== passwordConfirmation ? 'border-danger-500' : ''
+              }`}
               placeholder="Masukkan ulang password"
               required
+              autoComplete="new-password"
             />
+            {passwordConfirmation && password !== passwordConfirmation && (
+              <p className="text-danger-500 text-xs mt-1">Password tidak cocok</p>
+            )}
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-300"
+            className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-slate-300 transition-colors"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

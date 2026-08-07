@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { adminLogin } from '../../services/adminService';
@@ -9,8 +9,15 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const emailRef = useRef(null);
+
+  useEffect(() => {
+    // Auto-focus on email field
+    emailRef.current?.focus();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +39,14 @@ export default function Login() {
     try {
       const data = await adminLogin({ email, password });
       login(data);
+
+      // Save email if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem('remembered_email', email);
+      } else {
+        localStorage.removeItem('remembered_email');
+      }
+
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Email atau password salah');
@@ -41,11 +56,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold">Admin Login</h1>
-          <p className="text-gray-500 text-sm mt-1">Masuk ke panel administrasi</p>
+          <p className="text-slate-500 text-sm mt-1">Masuk ke panel administrasi</p>
         </div>
 
         {error && (
@@ -61,18 +76,20 @@ export default function Login() {
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                 </svg>
               </span>
               <input
+                ref={emailRef}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border rounded-lg px-10 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
                 placeholder="admin@example.com"
                 required
+                autoComplete="email"
               />
             </div>
           </div>
@@ -80,7 +97,7 @@ export default function Login() {
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -92,11 +109,12 @@ export default function Login() {
                 className="w-full border rounded-lg px-10 py-2.5 pr-10 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
                 placeholder="Masukkan password"
                 required
+                autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 {showPassword ? (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,7 +130,16 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm text-slate-600">Ingat Saya</span>
+            </label>
             <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">
               Lupa Password?
             </Link>
@@ -121,7 +148,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-300 transition-colors"
+            className="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-slate-300 transition-colors"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

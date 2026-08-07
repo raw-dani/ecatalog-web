@@ -5,9 +5,9 @@ export default function CategoryCard({ category }) {
 
   return (
     <Link to={`/kategori/${category.slug}`} className="group">
-      <div className="bg-white rounded-lg shadow p-6 text-center hover:shadow-lg transition h-full flex flex-col items-center">
+      <div className="bg-white rounded-2xl shadow text-center hover:shadow-lg transition h-full flex flex-col overflow-hidden">
         {/* Image or Icon */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden ${hasImage ? '' : 'bg-primary-100 group-hover:bg-primary-200'} transition`}>
+        <div className={`w-full aspect-video flex items-center justify-center ${hasImage ? 'overflow-hidden' : 'bg-primary-100 group-hover:bg-primary-200 p-6'} transition`}>
           {hasImage ? (
             <img
               src={category.image}
@@ -23,23 +23,24 @@ export default function CategoryCard({ category }) {
             </svg>
           )}
         </div>
+        <div className="p-6 flex flex-col items-center flex-1">
+          {/* Name */}
+          <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+            {category.name}
+          </h3>
 
-        {/* Name */}
-        <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-          {category.name}
-        </h3>
+          {/* Description */}
+          {category.description && (
+            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{category.description}</p>
+          )}
 
-        {/* Description */}
-        {category.description && (
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{category.description}</p>
-        )}
-
-        {/* Product Count */}
-        {category.products_count !== undefined && category.products_count !== null && (
-          <p className="text-xs text-gray-400 mt-2">
-            {category.products_count} {category.products_count === 1 ? 'produk' : 'produk'}
-          </p>
-        )}
+          {/* Product Count */}
+          {category.products_count !== undefined && category.products_count !== null && (
+            <p className="text-xs text-gray-400 mt-2">
+              {category.products_count} {category.products_count === 1 ? 'produk' : 'produk'}
+            </p>
+          )}
+        </div>
       </div>
     </Link>
   );

@@ -6,7 +6,7 @@ export default function CartItem({ item, onUpdate, onRemove }) {
   const subtotal = finalPrice * item.quantity;
 
   return (
-    <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow">
+    <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow">
       <div className="w-20 h-20 bg-gray-200 rounded overflow-hidden flex-shrink-0">
         {item.product?.images?.[0] && (
           <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />

@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import { getProducts, getCategoryProducts, getCategory } from '../services/cartService';
 import ProductGrid from '../components/Product/ProductGrid';
 import ProductFilter from '../components/Product/ProductFilter';
+import SEO from '../components/SEO/SEO';
 
 function HeaderSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="h-48 bg-gray-200 rounded-2xl mb-8" />
+      <div className="h-48 bg-gray-200 rounded-none mb-8" />
       <div className="h-10 bg-gray-200 rounded w-1/4 mb-4" />
       <div className="h-6 bg-gray-200 rounded w-1/2 mb-8" />
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
         {[1,2,3,4,5,6,7,8].map(i => (
-          <div key={i} className="bg-gray-200 rounded-2xl h-64" />
+          <div key={i} className="bg-gray-200 rounded-none h-64" />
         ))}
       </div>
     </div>
@@ -77,20 +77,20 @@ export default function Products() {
 
   return (
     <>
-      <Helmet>
-        <title>{category?.name || 'Produk'}</title>
-        <meta name="description" content={category?.description?.slice(0, 160) || `Koleksi produk ${category?.name || 'kami'}. Temukan produk terbaik dengan harga terjangkau.`} />
-      </Helmet>
+      <SEO
+        title={category?.name || (searchQuery ? `Hasil Pencarian: "${searchQuery}"` : 'Produk')}
+        description={category?.description ? category.description.slice(0, 160) : (searchQuery ? `Menampilkan hasil pencarian untuk "${searchQuery}"` : 'Koleksi produk kami. Temukan produk terbaik dengan harga terjangkau.')}
+      />
 
       {/* Page Header */}
       <section className="bg-gradient-to-br from-primary-800 via-primary-700 to-primary-900 text-white overflow-hidden relative">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-primary-300 rounded-full blur-3xl" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white rounded-none blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-primary-300 rounded-none blur-3xl" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-20">
           <div className="text-center max-w-3xl mx-auto">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+            <div className="w-12 h-12 bg-white/10 rounded-none flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
               {slug ? (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -106,7 +106,7 @@ export default function Products() {
                 </svg>
               )}
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold mb-3">{category?.name || 'Produk'}</h1>
+            <h1 className="text-3xl md:text-5xl font-bold mb-3 text-white">{category?.name || 'Produk'}</h1>
             {category?.description && (
               <p className="text-primary-100 text-lg max-w-lg mx-auto leading-relaxed">{category.description}</p>
             )}
@@ -115,8 +115,12 @@ export default function Products() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 -mt-6 relative z-10 pb-16">
-        {/* Breadcrumb */}
-        <nav className="bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-3 mb-6 flex items-center gap-2 text-sm">
+        
+
+        {/* Controls Bar */}
+        <div className="bg-white rounded-none shadow-sm border border-gray-100 px-5 py-4 mb-6">
+          {/* Breadcrumb */}
+        <nav className="bg-white rounded-none shadow-sm border border-gray-100 px-5 py-3 mb-6 flex items-center gap-2 text-sm">
           <Link to="/" className="text-gray-500 hover:text-primary-600 transition-colors">Beranda</Link>
           <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <polyline points="9 18 15 12 9 6" />
@@ -135,16 +139,13 @@ export default function Products() {
         </nav>
 
         {error && (
-          <div className="bg-danger-100 text-danger-700 p-4 rounded-xl mb-6 text-center border border-danger-200">
+          <div className="bg-danger-100 text-danger-700 p-4 rounded-none mb-6 text-center border border-danger-200">
             {error}
           </div>
         )}
-
-        {/* Controls Bar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-4 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center">
+              <div className="w-9 h-9 bg-primary-50 rounded-none flex items-center justify-center">
                 <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
@@ -156,10 +157,10 @@ export default function Products() {
 
             <div className="flex items-center gap-3">
               {/* View Toggle */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+              <div className="flex items-center bg-gray-100 rounded-none p-0.5">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-all duration-200 ${viewMode === 'grid' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`p-2 rounded-none transition-all duration-200 ${viewMode === 'grid' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   title="Grid View"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +169,7 @@ export default function Products() {
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-all duration-200 ${viewMode === 'list' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`p-2 rounded-none transition-all duration-200 ${viewMode === 'list' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   title="List View"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +192,7 @@ export default function Products() {
         {loading && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
             {[1,2,3,4,5,6,7,8].map(i => (
-              <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+              <div key={i} className="bg-white rounded-none shadow-sm border border-gray-100 overflow-hidden animate-pulse">
                 <div className="aspect-square bg-gray-200" />
                 <div className="p-4 space-y-2">
                   <div className="h-4 bg-gray-200 rounded w-3/4" />

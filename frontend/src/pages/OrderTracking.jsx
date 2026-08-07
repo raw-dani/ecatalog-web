@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Helmet } from 'react-helmet';
 import { getOrder } from '../services/cartService';
+import SEO from '../components/SEO/SEO';
 
 export default function OrderTracking() {
   const [orderNumber, setOrderNumber] = useState('');
@@ -39,16 +39,17 @@ export default function OrderTracking() {
 
   return (
     <>
-      <Helmet>
-        <title>Lacak Pesanan</title>
-        <meta name="description" content="Lacak status pesanan Anda dengan nomor pesanan dan nomor telepon." />
-      </Helmet>
+      <SEO
+        title="Lacak Pesanan"
+        description="Lacak status pesanan Anda dengan nomor pesanan dan nomor telepon."
+        noindex={true}
+      />
 
       <div className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-8 text-center">Lacak Pesanan</h1>
 
         {!order ? (
-          <form onSubmit={handleSubmit} className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+          <form onSubmit={handleSubmit} className="max-w-md mx-auto bg-white p-6 rounded-none shadow">
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Nomor Pesanan</label>
@@ -80,14 +81,14 @@ export default function OrderTracking() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-300"
+                className="w-full bg-primary-600 text-white py-2 rounded-none font-semibold hover:bg-primary-700 disabled:bg-gray-300"
               >
                 {loading ? 'Mencari...' : 'Lacak Pesanan'}
               </button>
             </div>
           </form>
         ) : (
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white p-6 rounded-none shadow">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold">Pesanan {order.order_number}</h2>
@@ -95,7 +96,7 @@ export default function OrderTracking() {
                   {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full text-sm font-medium bg-warning-100 text-warning-800 capitalize">
+              <span className="px-3 py-1 rounded-none text-sm font-medium bg-warning-100 text-warning-800 capitalize">
                 {order.status}
               </span>
             </div>
@@ -191,7 +192,7 @@ export default function OrderTracking() {
               <button
                 type="button"
                 onClick={handleReset}
-                className="w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-50"
+                className="w-full border border-gray-300 py-2 rounded-none hover:bg-gray-50"
               >
                 Lacak Pesanan Lain
               </button>

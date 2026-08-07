@@ -1,47 +1,190 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --color-success-50: #ecfdf5;
-  --color-success-100: #d1fae5;
-  --color-success-200: #a7f3d0;
-  --color-success-500: #10b981;
-  --color-success-600: #059669;
-  --color-success-700: #047857;
-  --color-success-800: #065f46;
+  /* Primary — Blue (shared with admin) */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #2563eb;
+  --color-primary-600: #1d4ed8;
+  --color-primary-700: #1e40af;
+  --color-primary-800: #1e3a8a;
+  --color-primary-900: #1e3a8a;
 
+  /* Success — Green */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #14532d;
+
+  /* Warning — Amber */
   --color-warning-50: #fffbeb;
   --color-warning-100: #fef3c7;
-  --color-warning-200: #fde68a;
+  --color-warning-200: #fce5b8;
+  --color-warning-300: #fed7aa;
+  --color-warning-400: #fdba74;
   --color-warning-500: #f59e0b;
   --color-warning-600: #d97706;
   --color-warning-700: #b45309;
   --color-warning-800: #92400e;
 
+  /* Danger — Red */
   --color-danger-50: #fef2f2;
   --color-danger-100: #fee2e2;
   --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
   --color-danger-700: #b91c1c;
   --color-danger-800: #991b1b;
+
+  /* Accent — Orange (CTA buttons) */
+  --color-accent-50: #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-200: #fed7aa;
+  --color-accent-300: #fbbf74;
+  --color-accent-400: #f97316;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-accent-700: #c2410c;
+  --color-accent-800: #9a3412;
+  --color-accent-900: #7c2d12;
+
+  /* Frontend design guide CSS variables */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --accent: #f97316;
+  --accent-hover: #ea580c;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-border: #e5e7eb;
+  --text-title: #111827;
+  --text-body: #374151;
+  --text-secondary: #6b7280;
+  --price: #dc2626;
+  --price-discount: #dc2626;
+  --price-strike: #9ca3af;
+  --card-radius: 1rem;
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  --card-hover-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  /* Category badge colors (design guide) */
+  --category-elektronik: #2563eb;
+  --category-fashion: #ec4899;
+  --category-olahraga: #16a34a;
+  --category-makanan: #f97316;
+  --category-kesehatan: #8b5cf6;
+  --category-rumah-tangga: #64748b;
+
+  /* Category badge classes */
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+@layer base {
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--bg);
+    color: var(--text-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-title);
+  }
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Product card shadow and hover effects */
+.product-card {
+  @apply bg-white rounded-2xl shadow border border-slate-200 transition-all duration-300;
+}
+.product-card:hover {
+  @apply -translate-y-1 shadow-lg;
+}
+
+.product-image {
+  @apply w-full h-full object-contain p-6 transition-transform duration-300;
+}
+.product-card:hover .product-image {
+  @apply scale-105;
+}
+
+/* Category badge colors */
+.category-elektronik { background-color: var(--category-elektronik); color: white; }
+.category-fashion { background-color: var(--category-fashion); color: white; }
+.category-olahraga { background-color: var(--category-olahraga); color: white; }
+.category-makanan { background-color: var(--category-makanan); color: white; }
+.category-kesehatan { background-color: var(--category-kesehatan); color: white; }
+.category-rumah-tangga { background-color: var(--category-rumah-tangga); color: white; }
+
+/* Animation for category card staggered fade-in */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Rich text content (from Quill) - prevent overflow beyond container */
+.prose {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.prose img,
+.prose video,
+.prose iframe,
+.prose table,
+.prose pre,
+.prose blockquote {
+  max-width: 100%;
+  height: auto;
+}
+
+.prose table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.prose pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.prose p,
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6,
+.prose ul,
+.prose ol,
+.prose li,
+.prose div {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }

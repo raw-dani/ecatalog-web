@@ -12,7 +12,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Category::query();
+        $query = Category::query()->withCount('products');
 
         if ($request->filled('parent_id')) {
             $query->where('parent_id', $request->parent_id);

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './components/Toast';
 import AdminLayout from './components/Layout/AdminLayout';
 import Login from './pages/Auth/Login';
 import ForgotPassword from './pages/Auth/ForgotPassword';
@@ -10,6 +11,9 @@ import Categories from './pages/Categories';
 import Orders from './pages/Orders';
 import Settings from './pages/Settings';
 import BankAccounts from './pages/BankAccounts';
+import Users from './pages/Users';
+import Profile from './pages/Profile';
+import ChangePassword from './pages/ChangePassword';
 
 function ProtectedRoute({ children }) {
   const { admin, loading } = useAuth();
@@ -32,6 +36,7 @@ function PublicRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
+      <ToastProvider>
       <Router>
         <Routes>
           <Route path="/login" element={
@@ -60,9 +65,13 @@ function App() {
             <Route path="orders" element={<Orders />} />
             <Route path="settings" element={<Settings />} />
             <Route path="bank-accounts" element={<BankAccounts />} />
+            <Route path="users" element={<Users />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="change-password" element={<ChangePassword />} />
           </Route>
         </Routes>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

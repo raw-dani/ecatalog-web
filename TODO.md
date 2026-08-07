@@ -71,13 +71,52 @@
 
 **Sub-total F = 18 jam**
 
+---
+
+## G. User Management & Role Management (Baru)
+
+### G1. Backend — Model & Database
+1) Update `Admin` model — ubah `role` dari enum menjadi string dengan validasi, tambah `role` ke fillable — **2 jam**
+2) Buat migration `alter_admins_add_role_enum` — expand enum `super_admin`, `admin`, `manager`, `karyawan` — **2 jam**
+3) Buat migration `create_roles_table` — tabel roles (id, name, guard_name, created_at, updated_at) — **3 jam**
+4) Buat migration `create_role_admin_pivot` — pivot table role_admin (role_id, admin_id) — **2 jam**
+5) Buat `Role` model — **2 jam**
+6) Update `Admin` model — tambah relationship `roles()` (many-to-many) — **2 jam**
+
+### G2. Backend — Middleware & Auth
+7) Buat `RoleMiddleware` — middleware untuk cek role berdasarkan route parameter — **4 jam**
+8) Update `AdminAuthController` — tambah `me()` response dengan roles, update `login()` — **3 jam**
+9) Update `auth.php` config — tambah guard `admin-role` jika diperlukan — **1 jam**
+10) Tambah role-based access ke existing admin routes (Dashboard, Products, Orders, Categories, BankAccounts, Settings) — **4 jam**
+
+### G3. Backend — API Routes & Controllers
+11) Buat API routes untuk user management (`/admin/users`, `/admin/users/{id}`, `/admin/users/{id}/role`) — **2 jam**
+12) Buat `UserManagementController` — index, store, show, update, destroy, assignRole — **10 jam**
+13) Update `AdminSeeder` — seed 3 role (admin, manager, karyawan) + assign ke admin — **2 jam**
+14) Update `DatabaseSeeder` — panggil UserManagementSeeder — **1 jam**
+
+### G4. Frontend Admin
+15) Update `adminService.js` — tambah methods: `getUsers()`, `createUser()`, `updateUser()`, `deleteUser()`, `assignRole()` — **4 jam**
+16) Buat halaman User Management (`/users`) — table, create/edit modal, role selector — **16 jam**
+17) Tambah route `/users` ke `App.jsx` — **1 jam**
+18) Role-based UI di `AdminLayout` — sembunyikan nav item berdasarkan role — **4 jam**
+19) Update `AuthContext.jsx` — simpan dan expose roles — **2 jam**
+
+### G5. QA & Dokumentasi
+20) Test user management flow (create user, assign role, login as role berbeda, akses route) — **6 jam**
+21) Update `CPANEL_INSTALL.md` dengan langkah migrasi, seeder, dan role setup — **2 jam**
+
+**Sub-total G = 72 jam**
+
+---
+
 ## Total
-- **Total Jam:** 580 jam
-- **Mandays (1 manday = 8 jam):** 72.5 mandays
+- **Total Jam:** 652 jam (580 + 72)
+- **Mandays (1 manday = 8 jam):** 81.5 mandays
 
 ## Deliverables
-- Backend: endpoint admin/auth + CRUD module + API publik (categories/products/cart/orders)
-- Admin Frontend: dashboard, categories, products, orders, bank accounts, settings + update status
+- Backend: endpoint admin/auth + CRUD module + API publik (categories/products/cart/orders) + user management API
+- Admin Frontend: dashboard, categories, products, orders, bank accounts, settings, users + update status + role-based UI
 - User Frontend: katalog, cart, order (WhatsApp), order tracking
 - QA/UAT checklist + dokumentasi deploy singkat
 

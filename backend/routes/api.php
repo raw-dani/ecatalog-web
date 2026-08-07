@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -25,6 +26,7 @@ Route::get('/categories/{slug}/products', [CategoryController::class, 'products'
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/featured', [ProductController::class, 'featured']);
+Route::get('/products/{slug}/related', [ProductController::class, 'related']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 
 Route::get('/cart', [CartController::class, 'index']);
@@ -42,35 +44,81 @@ Route::post('/admin/reset-password', [AdminAuthController::class, 'resetPassword
 Route::middleware('auth:admin-api')->group(function () {
     Route::get('/admin/me', [AdminAuthController::class, 'me']);
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
+    Route::put('/admin/profile', [AdminAuthController::class, 'updateProfile']);
+    Route::put('/admin/change-password', [AdminAuthController::class, 'changePassword']);
 
-    Route::get('/admin/dashboard', [DashboardController::class, 'stats']);
+    // Dashboard — super_admin, admin, manager, demo
+    Route::middleware('role:super_admin,admin,manager,demo')->group(function () {
+        Route::get('/admin/dashboard', [DashboardController::class, 'stats']);
+    });
 
-    Route::get('/admin/categories', [AdminCategoryController::class, 'index']);
-    Route::post('/admin/categories', [AdminCategoryController::class, 'store']);
-    Route::get('/admin/categories/{category}', [AdminCategoryController::class, 'show']);
-    Route::put('/admin/categories/{category}', [AdminCategoryController::class, 'update']);
-    Route::delete('/admin/categories/{category}', [AdminCategoryController::class, 'destroy']);
-    Route::post('/admin/categories/{category}/image', [AdminCategoryController::class, 'uploadImage']);
+    // Categories — super_admin, admin, manager, demo
+    Route::middleware('role:super_admin,admin,manager,demo')->group(function () {
+        Route::get('/admin/categories', [AdminCategoryController::class, 'index']);
+        Route::get('/admin/categories/export/csv', [AdminCategoryController::class, 'exportCsv']);
+        Route::post('/admin/categories', [AdminCategoryController::class, 'store']);
+        Route::get('/admin/categories/{category}', [AdminCategoryController::class, 'show']);
+        Route::put('/admin/categories/{category}', [AdminCategoryController::class, 'update']);
+        Route::delete('/admin/categories/{category}', [AdminCategoryController::class, 'destroy']);
+        Route::post('/admin/categories/{category}/image', [AdminCategoryController::class, 'uploadImage']);
+        Route::put('/admin/categories/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus']);
+    });
 
-    Route::get('/admin/products', [AdminProductController::class, 'index']);
-    Route::post('/admin/products', [AdminProductController::class, 'store']);
-    Route::get('/admin/products/{product}', [AdminProductController::class, 'show']);
-    Route::put('/admin/products/{product}', [AdminProductController::class, 'update']);
-    Route::delete('/admin/products/{product}', [AdminProductController::class, 'destroy']);
-    Route::post('/admin/products/{product}/images', [AdminProductController::class, 'uploadImages']);
-    Route::delete('/admin/products/{product}/images', [AdminProductController::class, 'deleteImage']);
+    // Products — super_admin, admin, manager, karyawan, demo
+    Route::middleware('role:super_admin,admin,manager,karyawan,demo')->group(function () {
+        Route::get('/admin/products', [AdminProductController::class, 'index']);
+        Route::post('/admin/products', [AdminProductController::class, 'store']);
+        Route::get('/admin/products/{product}', [AdminProductController::class, 'show']);
+        Route::put('/admin/products/{product}', [AdminProductController::class, 'update']);
+        Route::delete('/admin/products/{product}', [AdminProductController::class, 'destroy']);
+        Route::post('/admin/products/{product}/images', [AdminProductController::class, 'uploadImages']);
+        Route::delete('/admin/products/{product}/images', [AdminProductController::class, 'deleteImage']);
+        Route::post('/admin/products/{product}/duplicate', [AdminProductController::class, 'duplicate']);
+        Route::post('/admin/products/bulk/delete', [AdminProductController::class, 'bulkDelete']);
+        Route::post('/admin/products/bulk/toggle-status', [AdminProductController::class, 'bulkToggleStatus']);
+        Route::post('/admin/products/bulk/toggle-featured', [AdminProductController::class, 'bulkToggleFeatured']);
+        Route::get('/admin/products/export/csv', [AdminProductController::class, 'exportCsv']);
+    });
 
-    Route::get('/admin/orders', [AdminOrderController::class, 'index']);
-    Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show']);
-    Route::put('/admin/orders/{order}/status', [AdminOrderController::class, 'updateStatus']);
+    // Orders — super_admin, admin, manager, demo
+    Route::middleware('role:super_admin,admin,manager,demo')->group(function () {
+        Route::get('/admin/orders', [AdminOrderController::class, 'index']);
+        Route::get('/admin/orders/export/csv', [AdminOrderController::class, 'exportCsv']);
+        Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show']);
+        Route::put('/admin/orders/{order}/status', [AdminOrderController::class, 'updateStatus']);
+    });
 
-    Route::get('/admin/bank-accounts', [AdminBankAccountController::class, 'index']);
-    Route::post('/admin/bank-accounts', [AdminBankAccountController::class, 'store']);
-    Route::get('/admin/bank-accounts/{bankAccount}', [AdminBankAccountController::class, 'show']);
-    Route::put('/admin/bank-accounts/{bankAccount}', [AdminBankAccountController::class, 'update']);
-    Route::delete('/admin/bank-accounts/{bankAccount}', [AdminBankAccountController::class, 'destroy']);
+    // Bank Accounts — super_admin, admin, demo
+    Route::middleware('role:super_admin,admin,demo')->group(function () {
+        Route::get('/admin/bank-accounts', [AdminBankAccountController::class, 'index']);
+        Route::post('/admin/bank-accounts', [AdminBankAccountController::class, 'store']);
+        Route::get('/admin/bank-accounts/{bankAccount}', [AdminBankAccountController::class, 'show']);
+        Route::put('/admin/bank-accounts/{bankAccount}', [AdminBankAccountController::class, 'update']);
+        Route::delete('/admin/bank-accounts/{bankAccount}', [AdminBankAccountController::class, 'destroy']);
+        Route::put('/admin/bank-accounts/{bankAccount}/toggle-status', [AdminBankAccountController::class, 'toggleStatus']);
+    });
 
-    Route::get('/admin/settings', [AdminSettingController::class, 'index']);
-    Route::put('/admin/settings', [AdminSettingController::class, 'update']);
-    Route::post('/admin/settings/logo', [AdminSettingController::class, 'uploadLogo']);
+    // Settings — super_admin, admin, demo
+    Route::middleware('role:super_admin,admin,demo')->group(function () {
+        Route::get('/admin/settings', [AdminSettingController::class, 'index']);
+        Route::put('/admin/settings', [AdminSettingController::class, 'update']);
+        Route::post('/admin/settings/logo', [AdminSettingController::class, 'uploadLogo']);
+        Route::post('/admin/settings/favicon', [AdminSettingController::class, 'uploadFavicon']);
+        Route::post('/admin/settings/reset-defaults', [AdminSettingController::class, 'resetDefaults']);
+    });
+
+    // User Management — super_admin only
+    Route::middleware('role:super_admin')->group(function () {
+        Route::get('/admin/users', [UserManagementController::class, 'index']);
+        Route::post('/admin/users', [UserManagementController::class, 'store']);
+        Route::get('/admin/users/{id}', [UserManagementController::class, 'show']);
+        Route::put('/admin/users/{id}', [UserManagementController::class, 'update']);
+        Route::delete('/admin/users/{id}', [UserManagementController::class, 'destroy']);
+        Route::put('/admin/users/{id}/role', [UserManagementController::class, 'assignRole']);
+        Route::post('/admin/users/{id}/avatar', [UserManagementController::class, 'uploadAvatar']);
+        Route::post('/admin/users/bulk/delete', [UserManagementController::class, 'bulkDelete']);
+        Route::post('/admin/users/bulk/toggle-status', [UserManagementController::class, 'bulkToggleStatus']);
+        Route::get('/admin/users/activity-logs', [UserManagementController::class, 'activityLogs']);
+        Route::get('/admin/users/export/csv', [UserManagementController::class, 'exportCsv']);
+    });
 });

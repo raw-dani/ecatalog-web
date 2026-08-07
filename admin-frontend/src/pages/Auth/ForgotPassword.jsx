@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { forgotPassword } from '../../services/adminService';
 
@@ -6,6 +6,33 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [countdown, setCountdown] = useState(0);
+  const emailRef = useRef(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    emailRef.current?.focus();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      timerRef.current = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [countdown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +52,8 @@ export default function ForgotPassword() {
           text: `Link reset password telah dikirim. Token: ${data.token}`,
         });
       }
+      // Start countdown (60 seconds)
+      setCountdown(60);
     } catch (err) {
       const msg = err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Gagal mengirim email reset password';
       setMessage({ type: 'error', text: msg });
@@ -34,10 +63,10 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold mb-2 text-center">Lupa Password</h1>
-        <p className="text-gray-500 text-sm text-center mb-6">
+        <p className="text-slate-500 text-sm text-center mb-6">
           Masukkan email admin Anda untuk menerima link reset password
         </p>
 
@@ -53,18 +82,20 @@ export default function ForgotPassword() {
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
+              ref={emailRef}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border rounded px-3 py-2"
               placeholder="admin@example.com"
               required
+              autoComplete="email"
             />
           </div>
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-300"
+            disabled={loading || countdown > 0}
+            className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-slate-300 transition-colors"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -74,6 +105,8 @@ export default function ForgotPassword() {
                 </svg>
                 Mengirim...
               </span>
+            ) : countdown > 0 ? (
+              `Kirim Ulang (${countdown}s)`
             ) : 'Kirim Link Reset'}
           </button>
         </form>

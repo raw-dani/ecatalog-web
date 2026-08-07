@@ -216,7 +216,6 @@ Pastikan CORS diizinkan untuk domain frontend dan admin. Edit `config/cors.php`:
     'https://admin-ecatalog.hanjayateknologi.com',
     'http://admin-ecatalog.hanjayateknologi.com',
 ],
-'allowed_methods' => ['*'],
 'allowed_headers' => ['*'],
 'exposed_headers' => [],
 'max_age' => 0,
@@ -406,12 +405,23 @@ Periksa `config/cors.php` sudah mencakup semua domain frontend.
 
 Pastikan `.env` sudah benar dan database user memiliki akses ke database.
 
-### Gambar Tidak Muncul
+### Gambar Tidak Muncul (404 pada /storage/...)
+
+Ini terjadi karena `php artisan storage:link` membuat symlink di `public/storage` → `storage/app/public`, tetapi frontend dan admin frontend di-deploy ke subdomain yang berbeda dengan document root terpisah. Masing-masing subdomain tidak memiliki akses ke symlink di backend.
+
+**Solusi:** Buat symlink `storage` di setiap document root frontend yang menunjuk ke storage backend.
+
+Via SSH di cPanel:
 
 ```bash
-cd public_html/api-ecatalog
-php artisan storage:link
+# Untuk frontend customer (ecatalog.hanjayateknologi.com)
+ln -s /home/hanjayateknologi/public_html/api-ecatalog.hanjayateknologi.com/storage/app/public /home/hanjayateknologi/public_html/ecatalog/storage
+
+# Untuk admin panel (admin-ecatalog.hanjayateknologi.com)
+ln -s /home/hanjayateknologi/public_html/api-ecatalog.hanjayateknologi.com/storage/app/public /home/hanjayateknologi/public_html/admin-ecatalog/storage
 ```
+
+Ganti `hanjayateknologi` dengan username cPanel Anda. Pastikan path ke backend storage sesuai dengan lokasi sebenarnya di server Anda.
 
 Pastikan folder `storage/app/public` memiliki permission yang benar (755 atau 775).
 

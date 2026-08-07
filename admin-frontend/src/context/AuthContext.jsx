@@ -5,13 +5,17 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token) {
       getAdminMe()
-        .then(data => setAdmin(data.admin))
+        .then(data => {
+          setAdmin(data.admin);
+          setRoles(data.admin?.roles || []);
+        })
         .catch(() => {
           localStorage.removeItem('admin_token');
         })
@@ -23,17 +27,19 @@ export const AuthProvider = ({ children }) => {
 
   const login = (adminData) => {
     setAdmin(adminData.admin);
+    setRoles(adminData.admin?.roles || []);
     localStorage.setItem('admin_token', adminData.token);
   };
 
   const logout = async () => {
     await adminLogout();
     setAdmin(null);
+    setRoles([]);
     localStorage.removeItem('admin_token');
   };
 
   return (
-    <AuthContext.Provider value={{ admin, loading, login, logout }}>
+    <AuthContext.Provider value={{ admin, setAdmin, roles, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

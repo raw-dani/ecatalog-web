@@ -9,7 +9,7 @@ const navLinks = [
   { to: '/kontak', label: 'Kontak' },
 ];
 
-export default function Header({ cartCount }) {
+export default function Header({ cartCount, settings }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -36,17 +36,23 @@ export default function Header({ cartCount }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20 gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-gray-900 tracking-tight">
-              <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-                E-Catalog
-              </span>
-            </span>
+          <Link to="/" className="flex-shrink-0 group">
+            {settings?.store_logo ? (
+              <img src={settings.store_logo} alt={settings.store_name || 'Logo'} className="h-10 w-auto object-contain " />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center ">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <span className="text-xl font-bold text-gray-900 tracking-tight">
+                  <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                    E-Catalog
+                  </span>
+                </span>
+              </div>
+            )}
           </Link>
 
           {/* Search Bar - Desktop */}
@@ -57,7 +63,7 @@ export default function Header({ cartCount }) {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Cari produk..."
-                className="w-full border border-gray-200 rounded-2xl pl-11 pr-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 placeholder:text-gray-400"
+                className="w-full border border-gray-200 rounded-none pl-11 pr-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 placeholder:text-gray-400"
               />
               <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 group-focus-within:text-primary-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
@@ -72,7 +78,7 @@ export default function Header({ cartCount }) {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-none text-sm font-medium uppercase transition-all duration-200 ${
                   isActive(link.to)
                     ? 'bg-primary-50 text-primary-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -93,7 +99,7 @@ export default function Header({ cartCount }) {
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Cari..."
-                  className="w-24 lg:w-28 border border-gray-200 rounded-xl pl-8 pr-2 py-2 text-xs bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 placeholder:text-gray-400"
+                  className="w-24 lg:w-28 border border-gray-200 rounded-none pl-8 pr-2 py-2 text-xs bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 placeholder:text-gray-400"
                 />
                 <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8" />
@@ -105,7 +111,7 @@ export default function Header({ cartCount }) {
             {/* Cart */}
             <Link
               to="/keranjang"
-              className="relative p-2.5 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200 group"
+              className="relative p-2.5 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-none transition-all duration-200 group"
             >
               <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -120,7 +126,7 @@ export default function Header({ cartCount }) {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2.5 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200"
+              className="md:hidden p-2.5 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-none transition-all duration-200"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
@@ -147,7 +153,7 @@ export default function Header({ cartCount }) {
                 key={link.to}
                 to={link.to}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                 className={`block px-4 py-3 rounded-none text-sm font-medium uppercase transition-all duration-200 ${
                   isActive(link.to)
                     ? 'bg-primary-50 text-primary-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'

@@ -13,6 +13,7 @@ export const getCategoryProducts = (slug, params) => api.get(`/categories/${slug
 export const getProducts = (params) => api.get('/products', { params }).then(extractData);
 export const getFeaturedProducts = () => api.get('/products/featured').then(extractData);
 export const getProduct = (slug) => api.get(`/products/${slug}`).then(extractData);
+export const getRelatedProducts = (slug) => api.get(`/products/${slug}/related`).then(extractData);
 
 export const getCart = () => api.get('/cart').then(extractData);
 export const addToCart = (data) => api.post('/cart/items', data).then(extractData);

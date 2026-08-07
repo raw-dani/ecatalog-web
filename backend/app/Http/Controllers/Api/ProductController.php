@@ -71,4 +71,30 @@ class ProductController extends Controller
         $product = Product::where('slug', $slug)->where('is_active', true)->firstOrFail();
         return new ProductResource($product);
     }
+
+    public function related($slug)
+    {
+        $product = Product::where('slug', $slug)->where('is_active', true)->firstOrFail();
+
+        // Produk dari kategori yang sama, exclude produk saat ini
+        $related = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->limit(8)
+            ->get();
+
+        // Fallback: jika kurang dari 4, tambahkan produk lain (terbaru) sebagai pelengkap
+        if ($related->count() < 4) {
+            $existingIds = $related->pluck('id')->push($product->id);
+            $fallback = Product::where('is_active', true)
+                ->whereNotIn('id', $existingIds)
+                ->orderBy('created_at', 'desc')
+                ->limit(4 - $related->count())
+                ->get();
+            $related = $related->concat($fallback);
+        }
+
+        return ProductResource::collection($related);
+    }
 }

@@ -8,7 +8,7 @@ export default function ProductGrid({ products, loading, viewMode = 'grid' }) {
         : 'flex flex-col gap-4'
       }>
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow overflow-hidden">
+          <div key={i} className="bg-white rounded-none shadow overflow-hidden">
             <div className={viewMode === 'grid' ? 'aspect-square bg-gray-200 animate-pulse' : 'h-32 bg-gray-200 animate-pulse'} />
             <div className="p-4 space-y-2">
               <div className="h-4 bg-gray-200 rounded animate-pulse" />
@@ -27,7 +27,7 @@ export default function ProductGrid({ products, loading, viewMode = 'grid' }) {
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white rounded-lg shadow overflow-hidden divide-y">
+      <div className="bg-white rounded-none shadow overflow-hidden divide-y">
         {products.map(product => (
           <div key={product.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition">
             <div className="w-24 h-24 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
@@ -53,9 +53,9 @@ export default function ProductGrid({ products, loading, viewMode = 'grid' }) {
                 </span>
               </div>
               {product.stock > 0 ? (
-                 <span className="text-xs bg-success-100 text-success-800 px-2 py-1 rounded">Stok: {product.stock}</span>
+                <span className="text-xs bg-success-100 text-success-700 px-2 py-1 rounded">Stok: {product.stock}</span>
               ) : (
-                 <span className="text-xs bg-danger-100 text-danger-800 px-2 py-1 rounded">Habis</span>
+                <span className="text-xs bg-danger-100 text-danger-700 px-2 py-1 rounded">Habis</span>
               )}
             </div>
           </div>

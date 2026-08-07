@@ -3,18 +3,43 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\BankAccount;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
+    private function getDefaultSettings()
+    {
+        return [
+            'store_name' => 'Toko Saya',
+            'store_description' => 'Toko online terpercaya',
+            'store_address' => '',
+            'store_phone' => '',
+            'store_whatsapp' => '6281234567890',
+            'store_email' => '',
+            'meta_title' => 'Toko Online',
+            'meta_description' => '',
+            'order_whatsapp_message' => 'Halo Admin *{store_name}*, saya ingin memesan:',
+            'store_maps_embed' => '',
+            'store_favicon' => '',
+            'social_facebook' => '',
+            'social_instagram' => '',
+            'social_twitter' => '',
+            'social_tiktok' => '',
+            'social_youtube' => '',
+            'google_search_console' => '',
+            'google_analytics' => '',
+            'google_merchant' => '',
+            'google_tag_manager' => '',
+        ];
+    }
+
     public function index()
     {
         $settings = Setting::all()->map(function ($setting) {
             $value = $setting->value;
-            if (in_array($setting->key, ['store_logo', 'store_hero_background']) && $value) {
+            if (in_array($setting->key, ['store_logo', 'store_hero_background', 'store_favicon']) && $value) {
                 $value = asset('storage/' . $value);
             }
             return [
@@ -70,5 +95,43 @@ class SettingController extends Controller
             'message' => $settingKey === 'store_hero_background' ? 'Hero background berhasil diupload' : 'Logo berhasil diupload',
             'url' => asset('storage/' . $path),
         ]);
+    }
+
+    public function uploadFavicon(Request $request)
+    {
+        $request->validate([
+            'favicon' => 'required|image|mimes:ico,png,jpg,gif,svg,webp|max:2048',
+        ]);
+
+        $old = Setting::where('key', 'store_favicon')->first();
+        if ($old && $old->value) {
+            Storage::disk('public')->delete($old->value);
+        }
+
+        $path = $request->file('favicon')->store('favicons', 'public');
+
+        Setting::updateOrCreate(
+            ['key' => 'store_favicon'],
+            ['value' => $path, 'type' => 'string']
+        );
+
+        return response()->json([
+            'message' => 'Favicon berhasil diupload',
+            'url' => asset('storage/' . $path),
+        ]);
+    }
+
+    public function resetDefaults()
+    {
+        $defaults = $this->getDefaultSettings();
+        
+        foreach ($defaults as $key => $value) {
+            Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value, 'type' => 'string']
+            );
+        }
+
+        return response()->json(['message' => 'Pengaturan berhasil direset ke default', 'settings' => $defaults]);
     }
 }

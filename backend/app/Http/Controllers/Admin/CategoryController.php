@@ -12,15 +12,30 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Category::query();
+        $query = Category::query()->withCount('products');
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('name', 'like', "%{$search}%");
         }
 
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
         if ($request->boolean('paginate') !== false) {
-            $categories = $query->orderBy('sort_order')->orderBy('name')->paginate(20);
+            // Sorting
+            $sortField = $request->sort_field ?? 'sort_order';
+            $sortDirection = $request->sort_direction ?? 'asc';
+            $allowedSortFields = ['name', 'slug', 'sort_order', 'is_active', 'created_at', 'products_count'];
+            if (in_array($sortField, $allowedSortFields)) {
+                $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
+            } else {
+                $query->orderBy('sort_order')->orderBy('name');
+            }
+
+            $perPage = min((int) $request->per_page, 100) ?: 20;
+            $categories = $query->paginate($perPage);
             return CategoryResource::collection($categories);
         }
 
@@ -95,5 +110,57 @@ class CategoryController extends Controller
             'message' => 'Gambar berhasil diupload',
             'url' => asset('storage/' . $path),
         ]);
+    }
+
+    /**
+     * Toggle active status.
+     */
+    public function toggleStatus(Category $category)
+    {
+        $category->update(['is_active' => !$category->is_active]);
+
+        return new CategoryResource($category);
+    }
+
+    /**
+     * Export categories as CSV.
+     */
+    public function exportCsv(Request $request)
+    {
+        $query = Category::query()->withCount('products');
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $categories = $query->orderBy('sort_order')->orderBy('name')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="categories-export-' . date('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () use ($categories) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($file, ['Nama', 'Slug', 'Deskripsi', 'Induk', 'Urutan', 'Status', 'Jumlah Produk', 'Tanggal Dibuat']);
+
+            foreach ($categories as $category) {
+                fputcsv($file, [
+                    $category->name,
+                    $category->slug,
+                    $category->description ?? '-',
+                    $category->parent ? $category->parent->name : '-',
+                    $category->sort_order,
+                    $category->is_active ? 'Aktif' : 'Nonaktif',
+                    $category->products_count ?? 0,
+                    $category->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

@@ -7,6 +7,8 @@ use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -27,6 +29,9 @@ class AdminAuthController extends Controller
             ]);
         }
 
+        // Update last login timestamp
+        $admin->update(['last_login_at' => now()]);
+
         $token = $admin->createToken('admin-token')->plainTextToken;
 
         return response()->json([
@@ -35,6 +40,7 @@ class AdminAuthController extends Controller
                 'name' => $admin->name,
                 'email' => $admin->email,
                 'role' => $admin->role,
+                'roles' => $admin->roles->pluck('name'),
             ],
             'token' => $token,
         ]);
@@ -42,12 +48,16 @@ class AdminAuthController extends Controller
 
     public function me(Request $request)
     {
+        $admin = $request->user()->load('roles');
+
         return response()->json([
             'admin' => [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
-                'role' => $request->user()->role,
+                'id' => $admin->id,
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => $admin->role,
+                'avatar' => $admin->avatar,
+                'roles' => $admin->roles->pluck('name'),
             ],
         ]);
     }
@@ -67,6 +77,10 @@ class AdminAuthController extends Controller
 
         $admin = Admin::where('email', $request->email)->first();
 
+        if ($admin->role === 'demo') {
+            return response()->json(['message' => 'Reset password tidak diizinkan untuk akun demo.'], 403);
+        }
+
         // Delete old tokens
         DB::table('password_reset_tokens')
             ->where('email', $admin->email)
@@ -83,8 +97,6 @@ class AdminAuthController extends Controller
             'created_at' => now(),
         ]);
 
-        // In production, send email with: url('/admin/reset-password?token=' . $token . '&email=' . $admin->email)
-        // For development, return token directly
         $resetUrl = url('/auth/reset-password?token=' . $token . '&email=' . urlencode($admin->email));
 
         return response()->json([
@@ -107,6 +119,11 @@ class AdminAuthController extends Controller
             ->where('email', $request->email)
             ->where('guard', 'admin')
             ->first();
+
+        $admin = Admin::where('email', $request->email)->first();
+        if ($admin && $admin->role === 'demo') {
+            return response()->json(['message' => 'Reset password tidak diizinkan untuk akun demo.'], 403);
+        }
 
         if (!$record) {
             throw ValidationException::withMessages([
@@ -146,7 +163,81 @@ class AdminAuthController extends Controller
         $admin->tokens()->delete();
 
         return response()->json([
-            'message' => 'Password berhasil direset. Silakan login dengan password baru.',
+            'message' => 'Logged out successfully',
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $admin = $request->user();
+
+        $rules = [];
+        if ($request->has('name') || $request->has('email')) {
+            $rules['name'] = 'required|string|max:255';
+            $rules['email'] = 'required|email|max:255|unique:admins,email,' . $admin->id;
+        }
+        $rules['avatar'] = 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048';
+
+        $request->validate($rules);
+
+        $data = [];
+        if ($request->has('name')) {
+            $data['name'] = $request->name;
+        }
+        if ($request->has('email')) {
+            $data['email'] = $request->email;
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($admin->avatar) {
+                Storage::disk('public')->delete($admin->avatar);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = $path;
+        }
+
+        $admin->update($data);
+
+        $admin->load('roles');
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui',
+            'admin' => [
+                'id' => $admin->id,
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => $admin->role,
+                'avatar' => $admin->avatar,
+                'roles' => $admin->roles->pluck('name'),
+            ],
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $admin = $request->user();
+
+        if ($admin->role === 'demo') {
+            return response()->json(['message' => 'Ganti password tidak diizinkan untuk akun demo.'], 403);
+        }
+
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!Hash::check($request->current_password, $admin->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Password saat ini tidak sesuai.'],
+            ]);
+        }
+
+        $admin->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        return response()->json([
+            'message' => 'Password berhasil diubah',
         ]);
     }
 }

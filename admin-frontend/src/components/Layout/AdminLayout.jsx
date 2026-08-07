@@ -1,13 +1,51 @@
+import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+const ALL_ROLES = ['super_admin', 'admin', 'manager', 'karyawan', 'demo'];
+
 export default function AdminLayout() {
-  const { admin, logout } = useAuth();
+  const { admin, logout, roles } = useAuth();
   const navigate = useNavigate();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState(null);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const hasRole = (allowed) => {
+    if (!roles || roles.length === 0) return admin && allowed.includes(admin.role);
+    const fromRoles = allowed.some(role => roles.includes(role));
+    const fromRoleColumn = admin && allowed.includes(admin.role);
+    return fromRoles || fromRoleColumn;
+  };
+
+  const getRoleLabel = () => {
+    // Demo account has all roles in pivot, but its primary role is 'demo'
+    if (admin?.role === 'demo') return 'Demo';
+    if (roles.includes('super_admin') || admin?.role === 'super_admin') return 'Super Admin';
+    if (roles.includes('admin') || admin?.role === 'admin') return 'Admin';
+    if (roles.includes('manager') || admin?.role === 'manager') return 'Manager';
+    if (roles.includes('karyawan') || admin?.role === 'karyawan') return 'Karyawan';
+    return 'User';
+  };
+
+  const getInitials = () => {
+    if (!admin?.name) return 'A';
+    return admin.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const navItems = [
@@ -21,27 +59,8 @@ export default function AdminLayout() {
           <rect x="14" y="14" width="7" height="7" />
         </svg>
       ),
-      label: 'Dashboard'
-    },
-    {
-      to: '/products',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-          <line x1="12" y1="22.08" x2="12" y2="12" />
-        </svg>
-      ),
-      label: 'Produk'
-    },
-    {
-      to: '/categories',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-        </svg>
-      ),
-      label: 'Kategori'
+      label: 'Dashboard',
+      roles: ['super_admin', 'admin', 'manager'],
     },
     {
       to: '/orders',
@@ -54,17 +73,30 @@ export default function AdminLayout() {
           <polyline points="10 9 9 9 8 9" />
         </svg>
       ),
-      label: 'Pesanan'
+      label: 'Pesanan',
+      roles: ['super_admin', 'admin', 'manager'],
     },
     {
-      to: '/settings',
+      to: '/products',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+          <line x1="12" y1="22.08" x2="12" y2="12" />
         </svg>
       ),
-      label: 'Pengaturan'
+      label: 'Produk',
+      roles: ALL_ROLES,
+    },
+    {
+      to: '/categories',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        </svg>
+      ),
+      label: 'Kategori',
+      roles: ['super_admin', 'admin', 'manager'],
     },
     {
       to: '/bank-accounts',
@@ -80,50 +112,223 @@ export default function AdminLayout() {
           <line x1="16" y1="14" x2="16" y2="18" />
         </svg>
       ),
-      label: 'Rekening Bank'
+      label: 'Rekening Bank',
+      roles: ['super_admin', 'admin'],
+    },
+    {
+      to: '/users',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      ),
+      label: 'Manajemen User',
+      roles: ['super_admin'],
+    },
+    {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14" />
+          <path d="M9 7h6" />
+          <path d="M12 7v14M16 11l-4 4-4-4" />
+        </svg>
+      ),
+      label: 'Profil',
+      roles: ALL_ROLES,
+      children: [
+        {
+          to: '/profile',
+          label: 'Edit Profil',
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14" />
+              <path d="M9 7h6" />
+              <path d="M12 7v14M16 11l-4 4-4-4" />
+            </svg>
+          ),
+        },
+        ...(admin?.role !== 'demo' ? [{
+          to: '/change-password',
+          label: 'Ganti Password',
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z" />
+              <path d="M8 10h.01M16 10h.01" />
+              <path d="M9 14h6" />
+              <path d="M2 15l3 3 3-3M19 9l-3-3-3 3" />
+            </svg>
+          ),
+        }] : []),
+      ],
+    },
+    {
+      to: '/settings',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      ),
+      label: 'Pengaturan',
+      roles: ['super_admin', 'admin'],
     },
   ];
 
+  const visibleNavItems = navItems.filter(item => hasRole(item.roles));
+
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <aside className="w-64 bg-gray-900 text-white flex flex-col">
-        <div className="p-4 border-b border-gray-800">
-          <h1 className="text-xl font-bold">Admin Panel</h1>
-          <p className="text-sm text-gray-400">{admin?.name}</p>
-        </div>
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                   isActive ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-                }`
-              }
+    <div className="min-h-screen bg-slate-50 flex">
+      <aside className="w-64 bg-slate-900 text-white flex flex-col">
+        <div ref={userMenuRef} className="relative p-4 border-b border-slate-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-white">Admin Panel</h1>
+              <p className="text-sm text-slate-300">{admin?.name}</p>
+            </div>
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-sm font-bold text-white hover:bg-slate-700 transition"
             >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-        <div className="p-4 border-t border-gray-800">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition"
-          >
-            <span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </span>
-            <span>Logout</span>
-          </button>
+              {getInitials()}
+            </button>
+          </div>
+
+          {userMenuOpen && (
+            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white text-slate-800 rounded-xl shadow-lg border border-slate-200 py-1 z-50">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <p className="text-sm font-semibold text-slate-800">{admin?.name}</p>
+                <p className="text-xs text-slate-500">{admin?.email}</p>
+                <span className="inline-block mt-1 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                  {getRoleLabel()}
+                </span>
+              </div>
+              <button
+                onClick={() => { setUserMenuOpen(false); navigate('/profile'); }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14" />
+                  <path d="M9 7h6" />
+                  <path d="M12 7v14M16 11l-4 4-4-4" />
+                </svg>
+                Profil Saya
+              </button>
+              {admin?.role !== 'demo' && (
+                <button
+                  onClick={() => { setUserMenuOpen(false); navigate('/change-password'); }}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z" />
+                    <path d="M8 10h.01M16 10h.01" />
+                    <path d="M9 14h6" />
+                    <path d="M2 15l3 3 3-3M19 9l-3-3-3 3" />
+                  </svg>
+                  Ganti Password
+                </button>
+              )}
+              <button
+                onClick={() => { setUserMenuOpen(false); navigate('/settings'); }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Pengaturan
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-600 hover:bg-danger-100 transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Keluar
+              </button>
+            </div>
+          )}
         </div>
+
+        <nav className="flex-1 p-4 space-y-1">
+          {visibleNavItems.map(item => {
+            if (item.children) {
+              const isExpanded = openSubmenu === item.label;
+              const hasActiveChild = item.children.some(child =>
+                typeof window !== 'undefined' && window.location.pathname === child.to
+              );
+              return (
+                <div key={item.label}>
+                  <button
+                    onClick={() => setOpenSubmenu(isExpanded ? null : item.label)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition text-left ${
+                      hasActiveChild || isExpanded
+                        ? 'bg-primary-500 text-white hover:bg-primary-600'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`w-4 h-4 ml-auto transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {isExpanded && (
+                    <div className="ml-6 mt-1 space-y-1">
+                      {item.children.map(child => (
+                        <NavLink
+                          key={child.to}
+                          to={child.to}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-2 text-sm rounded-xl transition ${
+                              isActive
+                                ? 'bg-primary-500 text-white hover:bg-primary-600'
+                                : 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
+                            }`
+                          }
+                        >
+                          <span>{child.icon}</span>
+                          <span>{child.label}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                 className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+                     isActive ? 'bg-primary-500 text-white hover:bg-primary-600' : 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
+                  }`
+                }
+              >
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
       </aside>
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto">
         <Outlet />
       </main>
     </div>

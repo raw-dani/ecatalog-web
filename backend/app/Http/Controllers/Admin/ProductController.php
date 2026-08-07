@@ -13,11 +13,14 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query();
+        $query = Product::query()->with('category');
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%");
+            });
         }
 
         if ($request->filled('category_id')) {
@@ -28,7 +31,38 @@ class ProductController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $products = $query->orderBy('created_at', 'desc')->paginate(20);
+        if ($request->filled('is_featured')) {
+            $query->where('is_featured', $request->boolean('is_featured'));
+        }
+
+        if ($request->filled('stock_status')) {
+            if ($request->stock_status === 'low') {
+                $query->where('stock', '<', 5);
+            } elseif ($request->stock_status === 'out') {
+                $query->where('stock', '<=', 0);
+            } elseif ($request->stock_status === 'available') {
+                $query->where('stock', '>', 0);
+            }
+        }
+
+        // Sorting
+        $sortField = $request->sort_field ?? 'created_at';
+        $sortDirection = $request->sort_direction ?? 'desc';
+        $allowedSortFields = ['name', 'price', 'stock', 'is_active', 'is_featured', 'created_at', 'category_id'];
+        if (in_array($sortField, $allowedSortFields)) {
+            if ($sortField === 'category_id') {
+                $query->join('categories', 'products.category_id', '=', 'categories.id')
+                      ->orderBy('categories.name', $sortDirection === 'asc' ? 'asc' : 'desc')
+                      ->select('products.*');
+            } else {
+                $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $perPage = min((int) $request->per_page, 100) ?: 20;
+        $products = $query->paginate($perPage);
 
         return ProductResource::collection($products);
     }
@@ -149,5 +183,142 @@ class ProductController extends Controller
         Storage::disk('public')->delete($image);
 
         return response()->json(['message' => 'Gambar berhasil dihapus']);
+    }
+
+    /**
+     * Duplicate a product.
+     */
+    public function duplicate(Product $product)
+    {
+        $newProduct = $product->replicate();
+        $newProduct->name = $product->name . ' (Copy)';
+        $newProduct->slug = $product->slug . '-copy-' . uniqid();
+        $newProduct->sku = $product->sku ? $product->sku . '-COPY' : null;
+        $newProduct->save();
+
+        return new ProductResource($newProduct);
+    }
+
+    /**
+     * Bulk delete products.
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:products,id',
+        ]);
+
+        $ids = $request->ids;
+        $products = Product::whereIn('id', $ids)->get();
+        $count = $products->count();
+
+        foreach ($products as $product) {
+            if ($product->images) {
+                foreach ($product->images as $image) {
+                    Storage::disk('public')->delete($image);
+                }
+            }
+            $product->delete();
+        }
+
+        return response()->json([
+            'message' => "{$count} produk berhasil dihapus",
+        ]);
+    }
+
+    /**
+     * Bulk toggle active status.
+     */
+    public function bulkToggleStatus(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:products,id',
+            'is_active' => 'required|boolean',
+        ]);
+
+        $ids = $request->ids;
+        $isActive = $request->boolean('is_active');
+        $count = Product::whereIn('id', $ids)->update(['is_active' => $isActive]);
+
+        $statusText = $isActive ? 'Aktif' : 'Nonaktif';
+
+        return response()->json([
+            'message' => "{$count} produk berhasil diubah statusnya menjadi {$statusText}",
+        ]);
+    }
+
+    /**
+     * Bulk toggle featured status.
+     */
+    public function bulkToggleFeatured(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:products,id',
+            'is_featured' => 'required|boolean',
+        ]);
+
+        $ids = $request->ids;
+        $isFeatured = $request->boolean('is_featured');
+        $count = Product::whereIn('id', $ids)->update(['is_featured' => $isFeatured]);
+
+        return response()->json([
+            'message' => "{$count} produk berhasil diubah status unggulannya",
+        ]);
+    }
+
+    /**
+     * Export products as CSV.
+     */
+    public function exportCsv(Request $request)
+    {
+        $query = Product::query()->with('category');
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $products = $query->orderBy('created_at', 'desc')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="products-export-' . date('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () use ($products) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($file, [
+                'Nama', 'Slug', 'SKU', 'Kategori', 'Harga', 'Harga Diskon',
+                'Stok', 'Min Order', 'Unit', 'Status', 'Unggulan', 'Tanggal Dibuat'
+            ]);
+
+            foreach ($products as $product) {
+                fputcsv($file, [
+                    $product->name,
+                    $product->slug,
+                    $product->sku ?? '-',
+                    $product->category?->name ?? '-',
+                    $product->price,
+                    $product->discount_price ?? '-',
+                    $product->stock,
+                    $product->min_order,
+                    $product->unit,
+                    $product->is_active ? 'Aktif' : 'Nonaktif',
+                    $product->is_featured ? 'Ya' : 'Tidak',
+                    $product->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
