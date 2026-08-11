@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
+    private LicenseService $licenseService;
+
+    public function __construct(LicenseService $licenseService)
+    {
+        $this->licenseService = $licenseService;
+    }
+
     private function getDefaultSettings()
     {
         return [
@@ -49,7 +57,22 @@ class SettingController extends Controller
             ];
         });
 
-        return response()->json($settings);
+        $licenseResult = $this->licenseService->verify();
+        $licenseStatus = [
+            'status' => ($licenseResult['status'] ?? '') === 'success' ? 'valid' : 'invalid',
+            'message' => $licenseResult['message'] ?? 'Tidak dapat memeriksa license',
+            'license_key' => config('license.license_key'),
+            'platform' => config('license.platform'),
+        ];
+
+        if (($licenseResult['status'] ?? '') === 'success' && !empty($licenseResult['data'])) {
+            $licenseStatus['data'] = $licenseResult['data'];
+        }
+
+        return response()->json([
+            'settings' => $settings,
+            'license' => $licenseStatus,
+        ]);
     }
 
     public function update(Request $request)

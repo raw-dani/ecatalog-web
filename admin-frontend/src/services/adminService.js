@@ -70,3 +70,8 @@ export const bulkDeleteUsers = (ids) => api.post('/admin/users/bulk/delete', { i
 export const bulkToggleUserStatus = (ids, is_active) => api.post('/admin/users/bulk/toggle-status', { ids, is_active }).then(res => res.data);
 export const getActivityLogs = (params) => api.get('/admin/users/activity-logs', { params }).then(res => res.data);
 export const exportUsersCsv = (params) => api.get('/admin/users/export/csv', { params, responseType: 'blob' }).then(res => res.data);
+
+export const getLicenseStatus = () => api.get('/license/status').then(res => res.data);
+export const verifyLicense = (data) => api.post('/license/verify', data).then(res => res.data);
+export const activateLicense = (data) => api.post('/license/activate', data).then(res => res.data);
+export const deactivateLicense = (data) => api.post('/license/deactivate', data).then(res => res.data);

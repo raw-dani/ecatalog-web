@@ -122,6 +122,72 @@ Ganti kredensial ini segera setelah login pertama.
 - **Checkout WhatsApp**: Buat pesanan dan kirim via WhatsApp
 - **Lacak Pesanan**: Cek status pesanan dengan nomor dan telepon
 - **Panel Admin**: Kelola produk, kategori, pesanan, pengaturan, dan rekening bank
+- **Integrasi License Manager**: Proteksi aplikasi dengan lisensi, aktivasi via web/CLI, dan verifikasi otomatis
+
+## Integrasi License Manager
+
+Aplikasi ini sudah terintegrasi dengan License Manager untuk proteksi lisensi. Berikut cara menggunakan fitur ini:
+
+### Konfigurasi
+
+Tambahkan variabel berikut di file `.env`:
+
+```env
+LICENSE_SERVER_URL=https://license-manager.example.com
+LICENSE_API_KEY=your-api-key-here
+APP_LICENSE_KEY=SP-XXXX-XXXX-XXXX
+LICENSE_PLATFORM=hosting
+LICENSE_DOMAIN=localhost
+LICENSE_USERNAME=
+LICENSE_VERIFY_TTL_HOURS=24
+LICENSE_GRACE_PERIOD_HOURS=0
+```
+
+### Aktivasi License
+
+#### Via Web URL
+```powershell
+curl -X POST http://domain.com/activate-license -H "Content-Type: application/json" -d "{}"
+```
+
+#### Via Artisan Command
+```bash
+cd backend
+php artisan license:activate
+```
+
+### Verifikasi License
+
+#### Via Web URL
+```powershell
+curl http://domain.com/verify-license
+```
+
+#### Via Artisan Command
+```bash
+cd backend
+php artisan license:verify
+```
+
+#### Via Scheduler (Otomatis)
+Verifikasi otomatis dapat dijalankan setiap 6 jam dengan mengaktifkan scheduler di `app/Console/Kernel.php`:
+```php
+$schedule->command('license:verify')->everySixHours();
+```
+
+### Proteksi Frontend
+
+Middleware `check.license` akan memblokir akses ke halaman customer jika license tidak aktif/tidak valid. Admin panel tetap bisa diakses untuk melakukan aktivasi license.
+
+### Status License di Admin Panel
+
+Di halaman **Pengaturan** admin panel, terdapat kartu **Status License** yang menampilkan:
+- Status Valid/Tidak Valid
+- License Key
+- Platform
+- Expires At
+- Customer Name
+- Tombol **Aktifkan License** (muncul jika license belum valid)
 
 ## Dependencies
 

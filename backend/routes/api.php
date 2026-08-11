@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\UserManagementController;
+use App\Http\Controllers\Api\LicenseController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -17,35 +18,45 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\BankAccountController as AdminBankAccountController;
 
-Route::get('/settings', [SettingController::class, 'index']);
-Route::get('/bank-accounts', [BankAccountController::class, 'index']);
+Route::middleware('check.license')->group(function () {
+    Route::get('/settings', [SettingController::class, 'index']);
+    Route::get('/bank-accounts', [BankAccountController::class, 'index']);
 
-Route::get('/categories', [CategoryController::class, 'index']);
-Route::get('/categories/{slug}', [CategoryController::class, 'show']);
-Route::get('/categories/{slug}/products', [CategoryController::class, 'products']);
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{slug}', [CategoryController::class, 'show']);
+    Route::get('/categories/{slug}/products', [CategoryController::class, 'products']);
 
-Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/featured', [ProductController::class, 'featured']);
-Route::get('/products/{slug}/related', [ProductController::class, 'related']);
-Route::get('/products/{slug}', [ProductController::class, 'show']);
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/featured', [ProductController::class, 'featured']);
+    Route::get('/products/{slug}/related', [ProductController::class, 'related']);
+    Route::get('/products/{slug}', [ProductController::class, 'show']);
 
-Route::get('/cart', [CartController::class, 'index']);
-Route::post('/cart/items', [CartController::class, 'store']);
-Route::put('/cart/items/{cartItem}', [CartController::class, 'update']);
-Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy']);
-Route::delete('/cart', [CartController::class, 'clear']);
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart/items', [CartController::class, 'store']);
+    Route::put('/cart/items/{cartItem}', [CartController::class, 'update']);
+    Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy']);
+    Route::delete('/cart', [CartController::class, 'clear']);
 
-Route::post('/orders', [OrderController::class, 'store']);
-Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+});
 
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::post('/admin/forgot-password', [AdminAuthController::class, 'forgotPassword']);
 Route::post('/admin/reset-password', [AdminAuthController::class, 'resetPassword']);
+
+Route::post('/license/verify', [LicenseController::class, 'verify']);
+Route::post('/license/activate', [LicenseController::class, 'activate']);
+Route::post('/license/deactivate', [LicenseController::class, 'deactivate']);
+Route::get('/license/status', [LicenseController::class, 'status']);
+
 Route::middleware('auth:admin-api')->group(function () {
     Route::get('/admin/me', [AdminAuthController::class, 'me']);
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
     Route::put('/admin/profile', [AdminAuthController::class, 'updateProfile']);
-    Route::put('/admin/change-password', [AdminAuthController::class, 'changePassword']);
+    Route::middleware('role:super_admin,admin,manager,karyawan')->group(function () {
+        Route::put('/admin/change-password', [AdminAuthController::class, 'changePassword']);
+    });
 
     // Dashboard — super_admin, admin, manager, demo
     Route::middleware('role:super_admin,admin,manager,demo')->group(function () {

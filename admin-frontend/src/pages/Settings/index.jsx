@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react';
-import { getSettings, updateSettings, uploadLogo, uploadFavicon, resetSettingsDefaults } from '../../services/adminService';
+import { getSettings, updateSettings, uploadLogo, uploadFavicon, resetSettingsDefaults, activateLicense, getLicenseStatus } from '../../services/adminService';
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 import ReactQuill from 'react-quill-new';
@@ -157,6 +157,8 @@ export default function Settings() {
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState('general');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [licenseStatus, setLicenseStatus] = useState(null);
+  const [activatingLicense, setActivatingLicense] = useState(false);
 
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
@@ -178,9 +180,16 @@ export default function Settings() {
     getSettings()
       .then(data => {
         const settingsMap = {};
-        data.forEach(s => settingsMap[s.key] = s.value);
+        if (data.settings) {
+          data.settings.forEach(s => settingsMap[s.key] = s.value);
+        } else {
+          Object.entries(data).forEach(([key, value]) => {
+            if (key !== 'license') settingsMap[key] = value;
+          });
+        }
         setSettings(settingsMap);
         setOriginalSettings(settingsMap);
+        setLicenseStatus(data.license || null);
         if (settingsMap.store_logo) {
           setLogoPreview(resolveStorageUrl(settingsMap.store_logo));
         }
@@ -369,6 +378,20 @@ export default function Settings() {
     const waNumber = settings.store_whatsapp || '6281234567890';
     const testMessage = encodeURIComponent('Halo, ini adalah pesan test dari admin panel.');
     window.open(`https://wa.me/${waNumber}?text=${testMessage}`, '_blank');
+  };
+
+  const handleActivateLicense = async () => {
+    setActivatingLicense(true);
+    try {
+      await activateLicense({});
+      const status = await getLicenseStatus();
+      setLicenseStatus(status);
+      addToast('License berhasil diaktifkan', 'success');
+    } catch (err) {
+      addToast('Gagal mengaktifkan license: ' + (err.response?.data?.message || err.message), 'error');
+    } finally {
+      setActivatingLicense(false);
+    }
   };
 
   if (loading) {
@@ -605,7 +628,62 @@ className="bg-success-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-succe
           </div>
         )} */}
 
-        {/* Settings Tabs */}
+        {/* License Status */}
+      {licenseStatus && (
+        <div className="bg-white p-6 rounded-xl shadow mb-6">
+          <h2 className="text-xl font-semibold mb-4">Status License</h2>
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              licenseStatus.status === 'valid'
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {licenseStatus.status === 'valid' ? 'Valid' : 'Tidak Valid'}
+            </span>
+            <span className="text-sm text-slate-600">
+              {licenseStatus.message}
+            </span>
+          </div>
+          {licenseStatus.data && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-slate-500">License Key:</span>
+                <span className="ml-2 font-mono text-slate-700">{licenseStatus.license_key}</span>
+              </div>
+              <div>
+                <span className="text-slate-500">Platform:</span>
+                <span className="ml-2 text-slate-700">{licenseStatus.platform}</span>
+              </div>
+              {licenseStatus.data.expires_at && (
+                <div>
+                  <span className="text-slate-500">Expires At:</span>
+                  <span className="ml-2 text-slate-700">{licenseStatus.data.expires_at}</span>
+                </div>
+              )}
+              {licenseStatus.data.customer_name && (
+                <div>
+                  <span className="text-slate-500">Customer:</span>
+                  <span className="ml-2 text-slate-700">{licenseStatus.data.customer_name}</span>
+                </div>
+              )}
+            </div>
+          )}
+          {licenseStatus.status !== 'valid' && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleActivateLicense}
+                disabled={activatingLicense}
+                className="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-primary-700 disabled:bg-slate-300"
+              >
+                {activatingLicense ? 'Mengaktifkan...' : 'Aktifkan License'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Settings Tabs */}
         <div className="bg-white p-6 rounded-xl shadow mb-6">
           <div className="border-b mb-4">
             <nav className="flex gap-1 overflow-x-auto">
