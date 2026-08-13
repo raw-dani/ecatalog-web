@@ -139,42 +139,6 @@ export default function AdminLayout() {
       label: 'Pengaturan',
       roles: ['super_admin', 'admin', 'demo'],
     },
-    {
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14" />
-          <path d="M9 7h6" />
-          <path d="M12 7v14M16 11l-4 4-4-4" />
-        </svg>
-      ),
-      label: 'Profil',
-      roles: ALL_ROLES,
-      children: [
-        {
-          to: '/profile',
-          label: 'Edit Profil',
-          icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14" />
-              <path d="M9 7h6" />
-              <path d="M12 7v14M16 11l-4 4-4-4" />
-            </svg>
-          ),
-        },
-        ...(admin?.role !== 'demo' ? [{
-          to: '/change-password',
-          label: 'Ganti Password',
-          icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z" />
-              <path d="M8 10h.01M16 10h.01" />
-              <path d="M9 14h6" />
-              <path d="M2 15l3 3 3-3M19 9l-3-3-3 3" />
-            </svg>
-          ),
-        }] : []),
-      ],
-    },
   ];
 
   const visibleNavItems = navItems.filter(item => hasRole(item.roles));
@@ -184,35 +148,35 @@ export default function AdminLayout() {
       <aside className="w-64 bg-slate-900 text-white flex flex-col">
         <div ref={userMenuRef} className="relative p-4 border-b border-slate-800">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-white">Admin Panel</h1>
-              <p className="text-sm text-slate-300">{admin?.name}</p>
+            <div className="flex items-center gap-3">              
+              <div>
+                <h1 className="text-base font-bold text-white leading-tight">E - Catalog</h1>
+                <p className="text-xs text-slate-300">{getRoleLabel()}</p>
+              </div>
             </div>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-sm font-bold text-white hover:bg-slate-700 transition"
+              className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-bold text-white hover:bg-slate-700 transition"
             >
               {getInitials()}
             </button>
           </div>
 
           {userMenuOpen && (
-            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white text-slate-800 rounded-xl shadow-lg border border-slate-200 py-1 z-50">
+            <div className="absolute top-full right-0 mt-2 w-56 bg-white text-slate-800 rounded-xl shadow-lg border border-slate-200 py-1 z-50">
               <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-sm font-semibold text-slate-800">{admin?.name}</p>
                 <p className="text-xs text-slate-500">{admin?.email}</p>
-                <span className="inline-block mt-1 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                {/* <span className="inline-block mt-1 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
                   {getRoleLabel()}
-                </span>
+                </span> */}
               </div>
               <button
                 onClick={() => { setUserMenuOpen(false); navigate('/profile'); }}
                 className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v14" />
-                  <path d="M9 7h6" />
-                  <path d="M12 7v14M16 11l-4 4-4-4" />
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
                 </svg>
                 Profil Saya
               </button>
@@ -222,10 +186,8 @@ export default function AdminLayout() {
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 8a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z" />
-                    <path d="M8 10h.01M16 10h.01" />
-                    <path d="M9 14h6" />
-                    <path d="M2 15l3 3 3-3M19 9l-3-3-3 3" />
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                   Ganti Password
                 </button>

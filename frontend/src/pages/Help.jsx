@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import SEO from '../components/SEO/SEO';
 import { getSettings } from '../services/cartService';
 
@@ -9,9 +10,6 @@ const SECTIONS = [
   { key: 'help_returns', title: 'Pengembalian Barang', description: 'Kebijakan retur dan pengembalian', id: 'pengembalian' },
 ];
 
-// Konten rich text dari Quill terkadang mengandung &nbsp; (non-breaking space)
-// yang mencegah browser memutus baris di antara kata, menyebabkan teks terpotong per huruf.
-// Ganti &nbsp; dengan spasi biasa agar pemotongan kalimat menjadi per kata.
 const normalizeSpaces = (html) => {
   if (!html) return '';
   return html
@@ -43,25 +41,35 @@ export default function Help() {
   }, []);
 
   return (
-    <>
+    <div className="shop-theme flex flex-col pb-20">
       <SEO
         title={`Bantuan - ${settings.store_name || 'E-Catalog'}`}
         description={settings.store_description || 'Halaman bantuan dan informasi'}
         settings={settings}
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Bantuan</h1>
-          <p className="text-gray-500 max-w-lg mx-auto">
-            Temukan informasi dan jawaban untuk pertanyaan Anda di sini
-          </p>
+      <nav className="shop-container pt-6" style={{ paddingBottom: 0 }}>
+        <div className="flex items-center gap-2 text-sm mb-6">
+          <Link to="/" className="text-gray-500 hover:text-primary-600 transition-colors">Beranda</Link>
+          <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span className="text-gray-900 font-medium">Bantuan</span>
+        </div>
+      </nav>
+
+      <section className="shop-container">
+        <div className="section-header">
+          <div>
+            <h2 className="section-title">Bantuan</h2>
+            <div className="section-subtitle">Temukan informasi dan jawaban untuk pertanyaan Anda</div>
+          </div>
         </div>
 
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-24 bg-gray-200 animate-pulse" />
+              <div key={i} className="h-20 bg-gray-200 rounded-lg" />
             ))}
           </div>
         ) : (
@@ -73,7 +81,7 @@ export default function Help() {
               const isOpen = openSection === section.key;
 
               return (
-                <div key={section.key} id={section.id} className="bg-white border border-gray-100 shadow-sm overflow-hidden">
+                <div key={section.key} id={section.id} className="bg-white border border-gray-100 rounded-lg overflow-hidden hover:shadow-md hover:border-gray-200 transition-all duration-200">
                   <button
                     onClick={() => {
                       const newOpen = isOpen ? null : section.key;
@@ -85,11 +93,11 @@ export default function Help() {
                         }, 100);
                       }
                     }}
-                    className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-between p-5 md:p-6 text-left hover:bg-gray-50 transition-colors"
                   >
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900">{section.title}</h2>
-                      <p className="text-sm text-gray-500 mt-1">{section.description}</p>
+                      <h2 className="text-base md:text-lg font-bold text-gray-900">{section.title}</h2>
+                      <p className="text-xs md:text-sm text-gray-500 mt-1">{section.description}</p>
                     </div>
                     <svg
                       className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -99,7 +107,7 @@ export default function Help() {
                     </svg>
                   </button>
                   {isOpen && (
-                    <div className="px-6 pb-6 pt-2">
+                    <div className="px-5 md:px-6 pb-5 md:pb-6 pt-0">
                       <div
                         className="text-gray-600 prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: normalizeSpaces(content) }}
@@ -111,7 +119,7 @@ export default function Help() {
             })}
           </div>
         )}
-      </div>
-    </>
+      </section>
+    </div>
   );
 }

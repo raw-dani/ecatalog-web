@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\LicenseController;
+use App\Http\Controllers\Api\StoreSubscriberController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -39,6 +40,9 @@ Route::middleware('check.license')->group(function () {
 
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+
+    Route::post('/store/subscribe', [StoreSubscriberController::class, 'subscribe']);
+    Route::post('/store/unsubscribe', [StoreSubscriberController::class, 'unsubscribe']);
 });
 
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
@@ -47,7 +51,6 @@ Route::post('/admin/reset-password', [AdminAuthController::class, 'resetPassword
 
 Route::post('/license/verify', [LicenseController::class, 'verify']);
 Route::post('/license/activate', [LicenseController::class, 'activate']);
-Route::post('/license/deactivate', [LicenseController::class, 'deactivate']);
 Route::get('/license/status', [LicenseController::class, 'status']);
 
 Route::middleware('auth:admin-api')->group(function () {
@@ -118,6 +121,11 @@ Route::middleware('auth:admin-api')->group(function () {
         Route::post('/admin/settings/reset-defaults', [AdminSettingController::class, 'resetDefaults']);
     });
 
+    // Store Subscribers — super_admin, admin, demo
+    Route::middleware('role:super_admin,admin,demo')->group(function () {
+        Route::get('/admin/store-subscribers', [StoreSubscriberController::class, 'index']);
+    });
+
     // User Management — super_admin only
     Route::middleware('role:super_admin')->group(function () {
         Route::get('/admin/users', [UserManagementController::class, 'index']);
@@ -131,5 +139,6 @@ Route::middleware('auth:admin-api')->group(function () {
         Route::post('/admin/users/bulk/toggle-status', [UserManagementController::class, 'bulkToggleStatus']);
         Route::get('/admin/users/activity-logs', [UserManagementController::class, 'activityLogs']);
         Route::get('/admin/users/export/csv', [UserManagementController::class, 'exportCsv']);
+        Route::post('/license/deactivate', [LicenseController::class, 'deactivate']);
     });
 });

@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react';
-import { getSettings, updateSettings, uploadLogo, uploadFavicon, resetSettingsDefaults, activateLicense, getLicenseStatus } from '../../services/adminService';
+import { getSettings, updateSettings, uploadLogo, uploadFavicon, resetSettingsDefaults, activateLicense, deactivateLicense, getLicenseStatus } from '../../services/adminService';
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 import ReactQuill from 'react-quill-new';
@@ -159,6 +159,10 @@ export default function Settings() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [licenseStatus, setLicenseStatus] = useState(null);
   const [activatingLicense, setActivatingLicense] = useState(false);
+  const activatingLicenseRef = useRef(false);
+  const [licenseCooldown, setLicenseCooldown] = useState(0);
+  const [deactivatingLicense, setDeactivatingLicense] = useState(false);
+  const deactivatingLicenseRef = useRef(false);
 
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
@@ -381,6 +385,10 @@ export default function Settings() {
   };
 
   const handleActivateLicense = async () => {
+    if (activatingLicenseRef.current) return;
+    if (licenseCooldown > 0) return;
+
+    activatingLicenseRef.current = true;
     setActivatingLicense(true);
     try {
       await activateLicense({});
@@ -388,11 +396,53 @@ export default function Settings() {
       setLicenseStatus(status);
       addToast('License berhasil diaktifkan', 'success');
     } catch (err) {
-      addToast('Gagal mengaktifkan license: ' + (err.response?.data?.message || err.message), 'error');
+      const message = err.response?.data?.message || err.message || 'Gagal mengaktifkan license';
+      addToast('Gagal mengaktifkan license: ' + message, 'error');
+      const code = err.response?.status;
+      if (code === 429 || message.toLowerCase().includes('too many attempts')) {
+        setLicenseCooldown(60);
+      }
     } finally {
+      activatingLicenseRef.current = false;
       setActivatingLicense(false);
     }
   };
+
+  const handleDeactivateLicense = async () => {
+    if (deactivatingLicenseRef.current) return;
+
+    const confirmed = window.confirm('Apakah Anda yakin ingin menonaktifkan license? Setelah dinonaktifkan, customer tidak akan bisa mengakses aplikasi sampai license diaktifkan kembali.');
+    if (!confirmed) return;
+
+    deactivatingLicenseRef.current = true;
+    setDeactivatingLicense(true);
+    try {
+      await deactivateLicense({});
+      const status = await getLicenseStatus();
+      setLicenseStatus(status);
+      addToast('License berhasil dinonaktifkan', 'success');
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Gagal menonaktifkan license';
+      addToast('Gagal menonaktifkan license: ' + message, 'error');
+    } finally {
+      deactivatingLicenseRef.current = false;
+      setDeactivatingLicense(false);
+    }
+  };
+
+  useEffect(() => {
+    if (licenseCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setLicenseCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [licenseCooldown]);
 
   if (loading) {
     return (
@@ -516,7 +566,7 @@ className="bg-success-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-succe
           </div>
 
           {/* Hero Background */}
-          <div className="bg-white p-6 rounded-xl shadow">
+          {/* <div className="bg-white p-6 rounded-xl shadow">
             <h2 className="text-xl font-semibold mb-4">Hero Background</h2>
             <div className="flex items-start gap-6">
               <div className="flex-shrink-0">
@@ -561,56 +611,57 @@ className="bg-success-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-succe
                 )}
               </div>
             </div>
+          </div> */}
+          {/* Favicon Upload */}
+          <div className="bg-white p-6 rounded-xl shadow">
+            <h2 className="text-xl font-semibold mb-4">Favicon</h2>
+            <div className="flex items-start gap-6">
+              <div className="flex-shrink-0">
+                {faviconPreview ? (
+                  <img src={faviconPreview} alt="Favicon" className="w-32 h-32 object-contain border rounded-xl" />
+                ) : (
+                  <div className="w-32 h-32 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 text-sm">
+                    No favicon
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 space-y-3">
+                <input
+                  type="file"
+                  accept="image/x-icon,image/png,image/svg+xml"
+                  onChange={handleFaviconChange}
+                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                />
+                <p className="text-xs text-slate-400">Format: ICO, PNG, SVG. Rekomendasi ukuran: 32x32px. Maks: 2MB</p>
+                {faviconFile && (
+                  <button
+                    type="button"
+                    onClick={handleUploadFavicon}
+                    disabled={uploadingFavicon}
+                    className="bg-success-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-success-700 disabled:bg-slate-300"
+                  >
+                    {uploadingFavicon ? 'Mengupload...' : 'Upload Favicon'}
+                  </button>
+                )}
+                {settings?.store_favicon && !faviconFile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettings(prev => ({ ...prev, store_favicon: null }));
+                      setFaviconPreview(null);
+                      addToast('Favicon berhasil dihapus', 'success');
+                    }}
+                    className="bg-danger-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-danger-600"
+                  >
+                    Hapus Favicon
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Favicon Upload */}
-        <div className="bg-white p-6 rounded-xl shadow mb-6">
-          <h2 className="text-xl font-semibold mb-4">Favicon</h2>
-          <div className="flex items-start gap-6">
-            <div className="flex-shrink-0">
-              {faviconPreview ? (
-                <img src={faviconPreview} alt="Favicon" className="w-16 h-16 object-contain border rounded-lg" />
-              ) : (
-                <div className="w-16 h-16 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center text-slate-400 text-xs">
-                  No favicon
-                </div>
-              )}
-            </div>
-            <div className="flex-1 space-y-3">
-              <input
-                type="file"
-                accept="image/x-icon,image/png,image/svg+xml"
-                onChange={handleFaviconChange}
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-              />
-              <p className="text-xs text-slate-400">Format: ICO, PNG, SVG. Rekomendasi ukuran: 32x32px. Maks: 2MB</p>
-              {faviconFile && (
-                <button
-                  type="button"
-                  onClick={handleUploadFavicon}
-                  disabled={uploadingFavicon}
-                  className="bg-success-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-success-700 disabled:bg-slate-300"
-                >
-                  {uploadingFavicon ? 'Mengupload...' : 'Upload Favicon'}
-                </button>
-              )}
-              {settings?.store_favicon && !faviconFile && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSettings(prev => ({ ...prev, store_favicon: null }));
-                    setFaviconPreview(null);
-                    addToast('Favicon berhasil dihapus', 'success');
-                  }}
-                  className="bg-danger-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-danger-600"
-                >
-                  Hapus Favicon
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        
 
         {/* Live Hero Preview */}
         {/* {(heroBackgroundPreview || settings.store_hero_background) && (
@@ -668,18 +719,38 @@ className="bg-success-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-succe
               )}
             </div>
           )}
-          {licenseStatus.status !== 'valid' && (
-            <div className="mt-4">
+          <div className="mt-4 flex gap-2">
+            {licenseStatus.status !== 'valid' ? (
               <button
                 type="button"
                 onClick={handleActivateLicense}
-                disabled={activatingLicense}
+                disabled={activatingLicense || licenseCooldown > 0}
                 className="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-primary-700 disabled:bg-slate-300"
               >
-                {activatingLicense ? 'Mengaktifkan...' : 'Aktifkan License'}
+                {activatingLicense ? 'Mengaktifkan...' : licenseCooldown > 0 ? `Coba lagi dalam ${licenseCooldown}s` : 'Aktifkan License'}
               </button>
-            </div>
-          )}
+            ) : (
+              <button
+                type="button"
+                onClick={handleDeactivateLicense}
+                disabled={deactivatingLicense}
+                className="bg-danger-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-danger-600 disabled:bg-slate-300"
+              >
+                {deactivatingLicense ? 'Menonaktifkan...' : 'Nonaktifkan License'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={async () => {
+                const status = await getLicenseStatus();
+                setLicenseStatus(status);
+                addToast('Status license diperbarui', 'success');
+              }}
+              className="border border-slate-300 text-slate-700 px-4 py-2 rounded-xl text-sm hover:bg-slate-50"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       )}
 

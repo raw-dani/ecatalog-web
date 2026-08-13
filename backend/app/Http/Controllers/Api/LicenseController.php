@@ -66,7 +66,6 @@ class LicenseController extends Controller
         $result = $this->licenseService->verify($fingerprint);
 
         $isValid = ($result['status'] ?? '') === 'success';
-        $httpCode = $result['http_code'] ?? 500;
 
         $response = [
             'status' => $isValid ? 'valid' : 'invalid',
@@ -77,10 +76,14 @@ class LicenseController extends Controller
             'message' => $result['message'] ?? 'Unknown status',
         ];
 
+        if (!empty($result['code'])) {
+            $response['code'] = $result['code'];
+        }
+
         if ($isValid && !empty($result['data'])) {
             $response['data'] = $result['data'];
         }
 
-        return response()->json($response, $isValid ? 200 : $httpCode);
+        return response()->json($response, 200);
     }
 }

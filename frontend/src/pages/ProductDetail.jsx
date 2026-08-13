@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProduct, getRelatedProducts } from '../services/cartService';
+import { getProduct, getRelatedProducts, getSettings } from '../services/cartService';
 import { formatCurrency } from '../utils/formatCurrency';
 import WhatsAppButton from '../components/WhatsApp/WhatsAppButton';
-import ProductCard from '../components/Product/ProductCard';
+import ShopProductCard from '../components/Product/ShopProductCard';
 import { useCart } from '../context/CartContext';
 import SEO from '../components/SEO/SEO';
 
@@ -27,22 +27,23 @@ function ImageGallery({ images, productName, hasDiscount }) {
 
   return (
     <div className="space-y-4 sticky top-24">
-      {/* Main Image */}
-      <div className="aspect-square bg-gray-100 rounded-none overflow-hidden group relative">
+      <div className="aspect-square bg-gray-100 rounded-none overflow-hidden relative">
         <img
           src={selectedImage}
           alt={productName}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover"
           onError={() => setImgError(true)}
         />
         {hasDiscount && (
-          <div className="absolute top-4 left-4 bg-danger-500 text-white text-xs font-bold px-3 py-1.5 rounded-none shadow-lg">
-            DISKON
-          </div>
+        <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-lg flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          DISKON
+        </div>
         )}
       </div>
 
-      {/* Thumbnails */}
       {images.length > 1 && (
         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {images.map((img, index) => (
@@ -66,17 +67,17 @@ function ImageGallery({ images, productName, hasDiscount }) {
 
 function Skeleton() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 animate-pulse">
-      <div className="h-48 bg-gray-200 rounded-none mb-8" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div className="aspect-square bg-gray-200 rounded-none" />
-        <div className="space-y-5">
-          <div className="h-8 bg-gray-200 rounded w-3/4" />
-          <div className="h-5 bg-gray-200 rounded w-1/4" />
-          <div className="h-6 bg-gray-200 rounded w-1/3" />
-          <div className="h-24 bg-gray-200 rounded-none" />
-          <div className="h-32 bg-gray-200 rounded-none" />
-          <div className="h-14 bg-gray-200 rounded-none" />
+    <div className="shop-theme animate-pulse min-h-screen">
+      <div className="shop-container pt-6">
+        <div className="h-6 bg-gray-200 rounded w-1/4 mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="aspect-square bg-gray-200 rounded-none" />
+          <div className="space-y-4">
+            <div className="h-8 bg-gray-200 rounded w-3/4" />
+            <div className="h-6 bg-gray-200 rounded w-1/3" />
+            <div className="h-24 bg-gray-200 rounded-none" />
+            <div className="h-14 bg-gray-200 rounded-none" />
+          </div>
         </div>
       </div>
     </div>
@@ -92,6 +93,11 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const { addToCart } = useCart();
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    getSettings().then(setSettings).catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -121,10 +127,12 @@ export default function ProductDetail() {
     }
   };
 
+  const storeName = settings?.store_name || 'Toko Online';
+
   if (loading) return <Skeleton />;
   if (error) return (
-    <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-      <div className="w-20 h-20 bg-danger-50 rounded-none flex items-center justify-center mx-auto mb-4">
+    <div className="shop-theme flex flex-col items-center justify-center py-20">
+      <div className="w-20 h-20 bg-danger-50 rounded-none flex items-center justify-center mb-4">
         <svg className="w-10 h-10 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
@@ -139,8 +147,8 @@ export default function ProductDetail() {
     </div>
   );
   if (!product) return (
-    <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-      <div className="w-20 h-20 bg-gray-100 rounded-none flex items-center justify-center mx-auto mb-4">
+    <div className="shop-theme flex flex-col items-center justify-center py-20">
+      <div className="w-20 h-20 bg-gray-100 rounded-none flex items-center justify-center mb-4">
         <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" />
           <line x1="15" y1="9" x2="9" y2="15" />
@@ -163,33 +171,8 @@ export default function ProductDetail() {
   const seoDescription = product.meta_description || product.description?.slice(0, 160) || '';
   const seoImage = product.images && product.images.length > 0 ? product.images[0] : '';
 
-  const productJsonLd = {
-    '@context': 'https://schema.org/',
-    '@type': 'Product',
-    name: product.name,
-    image: product.images || [],
-    description: product.description || '',
-    sku: product.sku || '',
-    brand: {
-      '@type': 'Brand',
-      name: 'E-Catalog',
-    },
-    offers: {
-      '@type': 'Offer',
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      priceCurrency: 'IDR',
-      price: String(finalPrice),
-      availability: isOutOfStock
-        ? 'https://schema.org/OutOfStock'
-        : 'https://schema.org/InStock',
-      ...(product.discount_price && {
-        salePrice: String(product.discount_price),
-      }),
-    },
-  };
-
   return (
-    <>
+    <div className="shop-theme flex flex-col pb-20">
       <SEO
         title={seoTitle}
         description={seoDescription}
@@ -202,46 +185,39 @@ export default function ProductDetail() {
           condition: 'new',
           sku: product.sku,
         }}
-        jsonLd={productJsonLd}
       />
 
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <nav className="flex items-center gap-2 text-sm">
-            <Link to="/" className="text-gray-500 hover:text-primary-600 transition-colors">Beranda</Link>
-            <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <Link to="/produk" className="text-gray-500 hover:text-primary-600 transition-colors">Produk</Link>
-            {product.category && (
-              <>
-                <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-                <Link to={`/kategori/${product.category.slug}`} className="text-gray-500 hover:text-primary-600 transition-colors">
-                  {product.category.name}
-                </Link>
-              </>
-            )}
-            <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-            <span className="text-primary-600 font-medium truncate max-w-[200px]">{product.name}</span>
-          </nav>
+      <nav className="shop-container pt-6" style={{ paddingBottom: 0 }}>
+        <div className="flex items-center gap-2 text-sm">
+          <Link to="/" className="text-gray-500 hover:text-primary-600 transition-colors">Beranda</Link>
+          <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <Link to="/produk" className="text-gray-500 hover:text-primary-600 transition-colors">Produk</Link>
+          {product.category && (
+            <>
+              <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              <Link to={`/kategori/${product.category.slug}`} className="text-gray-500 hover:text-primary-600 transition-colors">
+                {product.category.name}
+              </Link>
+            </>
+          )}
+          <svg className="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span className="text-gray-900 font-medium truncate max-w-[200px]">{product.name}</span>
         </div>
-      </div>
+      </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 pb-16">
+      <section className="shop-container">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-          {/* Image Gallery */}
           <div>
             <ImageGallery images={product.images} productName={product.name} hasDiscount={!!product.discount_price} />
           </div>
 
-          {/* Product Info */}
           <div className="flex flex-col">
-            {/* Category Badge */}
             {product.category && (
               <Link
                 to={`/kategori/${product.category.slug}`}
@@ -254,10 +230,8 @@ export default function ProductDetail() {
               </Link>
             )}
 
-            {/* Product Name */}
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 leading-tight">{product.name}</h1>
 
-            {/* Rating / SKU */}
             <div className="flex items-center gap-4 mb-5 text-sm text-gray-400">
               {product.sku && (
                 <span className="flex items-center gap-1">
@@ -278,13 +252,12 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Price */}
-            <div className="bg-gradient-to-r from-primary-50 to-white rounded-none p-5 mb-6">
+            <div className="bg-gray-50 rounded-none p-5 mb-6">
               <div className="flex items-baseline gap-3">
                 {product.discount_price && (
                   <span className="text-lg text-gray-400 line-through">{formatCurrency(product.price)}</span>
                 )}
-                <span className="text-4xl font-bold text-danger-600">{formatCurrency(finalPrice)}</span>
+                <span className="text-4xl font-bold text-gray-900">{formatCurrency(finalPrice)}</span>
               </div>
               {product.discount_price && (
                 <div className="flex items-center gap-2 mt-2">
@@ -295,7 +268,6 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Stock Status */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
               {isOutOfStock ? (
                 <span className="inline-flex items-center gap-1.5 text-sm font-semibold bg-danger-100 text-danger-800 px-4 py-2 rounded-none">
@@ -329,52 +301,48 @@ export default function ProductDetail() {
               </span>
             </div>
 
-            {/* Description */}
             {product.description && (
               <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Deskripsi Produk
                 </h3>
-                <div className="bg-gray-50 rounded-none p-5">
-                  <p className="text-gray-700 whitespace-pre-line leading-relaxed">{product.description}</p>
+                <div className="bg-white border border-gray-100 rounded-lg p-4 md:p-6">
+                  <p className="text-gray-700 whitespace-pre-line leading-relaxed text-sm md:text-base">{product.description}</p>
                 </div>
               </div>
             )}
 
-            {/* Specifications */}
             {product.specifications && Array.isArray(product.specifications) && product.specifications.length > 0 && (
               <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   Spesifikasi Produk
                 </h3>
-                <div className="bg-gray-50 rounded-none p-5 divide-y divide-gray-200">
+                <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
                   {product.specifications.map((spec, index) => (
-                    <div key={index} className="flex items-center py-3 first:pt-0 last:pb-0">
-                      <span className="text-sm text-gray-500 w-1/3">{spec.key}</span>
-                      <span className="text-sm font-medium text-gray-900 w-2/3">{spec.value}</span>
+                    <div key={index} className={`flex items-center py-3 md:py-4 px-4 md:px-6 ${index > 0 ? 'border-t border-gray-100' : ''}`}>
+                      <span className="text-xs md:text-sm text-gray-500 w-1/3">{spec.key}</span>
+                      <span className="text-xs md:text-sm font-medium text-gray-900 w-2/3">{spec.value}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Quantity & Actions */}
             <div className="bg-white border border-gray-200 rounded-none p-5 space-y-4 sticky bottom-0 md:static">
               <div className="flex items-center justify-between">
                 <label className="font-medium text-gray-900">Jumlah</label>
-                <div className="flex items-center bg-gray-100 rounded-none overflow-hidden">
+                <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden">
                   <button
                     onClick={() => setQty(Math.max(product.min_order || 1, qty - 1))}
-                    className="px-4 py-2.5 text-gray-600 hover:bg-gray-200 hover:text-primary-600 transition-colors text-lg font-medium disabled:opacity-50"
+                    className="px-4 py-2.5 text-gray-600 hover:bg-gray-200 hover:text-primary-600 transition-colors text-lg font-medium disabled:opacity-50 rounded-l-lg"
                     disabled={isOutOfStock || qty <= (product.min_order || 1)}
                   >
                     −
@@ -384,7 +352,7 @@ export default function ProductDetail() {
                   </span>
                   <button
                     onClick={() => setQty(Math.min(product.stock, qty + 1))}
-                    className="px-4 py-2.5 text-gray-600 hover:bg-gray-200 hover:text-primary-600 transition-colors text-lg font-medium disabled:opacity-50"
+                    className="px-4 py-2.5 text-gray-600 hover:bg-gray-200 hover:text-primary-600 transition-colors text-lg font-medium disabled:opacity-50 rounded-r-lg"
                     disabled={isOutOfStock || qty >= product.stock}
                   >
                     +
@@ -396,7 +364,7 @@ export default function ProductDetail() {
                 <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-none font-semibold transition-all duration-200 ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg font-semibold transition-all duration-200 ${
                     isOutOfStock
                       ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       : added
@@ -409,7 +377,7 @@ export default function ProductDetail() {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Ditambahkan!
+                      <span className="hidden md:inline">Ditambahkan!</span>
                     </>
                   ) : isOutOfStock ? (
                     <>
@@ -418,7 +386,7 @@ export default function ProductDetail() {
                         <line x1="15" y1="9" x2="9" y2="15" />
                         <line x1="9" y1="9" x2="15" y2="15" />
                       </svg>
-                      Stok Habis
+                      <span className="hidden md:inline">Stok Habis</span>
                     </>
                   ) : (
                     <>
@@ -427,44 +395,45 @@ export default function ProductDetail() {
                         <circle cx="20" cy="21" r="1" />
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                       </svg>
-                      Tambah ke Keranjang
+                      <span className="hidden md:inline">Tambah ke Keranjang</span>
                     </>
                   )}
                 </button>
-                <WhatsAppButton product={product} className="flex-1" />
+                <WhatsAppButton product={product} className="flex-1 text-white" />
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 pb-16">
-          <div className="flex items-center justify-between mb-6">
+        <section className="shop-container mt-12">
+          <div className="section-header">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Produk Serupa</h2>
-              <p className="text-gray-500 mt-1">Rekomendasi produk lain yang mungkin Anda sukai</p>
+              <h2 className="section-title">Produk Serupa</h2>
+              <div className="section-subtitle">Rekomendasi produk lain yang mungkin Anda sukai</div>
             </div>
             {product.category && (
               <Link
                 to={`/kategori/${product.category.slug}`}
-                className="hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
               >
                 Lihat Semua
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
               </Link>
             )}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+
+          <section className="product-grid" role="tabpanel">
             {relatedProducts.map(related => (
-              <ProductCard key={related.id} product={related} />
+              <ShopProductCard
+                key={related.id}
+                product={related}
+                storeName={storeName}
+              />
             ))}
-          </div>
-        </div>
+          </section>
+        </section>
       )}
-    </>
+    </div>
   );
 }

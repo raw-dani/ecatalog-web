@@ -109,7 +109,7 @@ export default function Profile() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-xl shadow border border-slate-100 p-6">
-          <div className="flex items-center gap-6 mb-6">
+          {/* <div className="flex items-center gap-6 mb-6">
             <div className="relative">
               {currentAvatar ? (
                 <img src={currentAvatar} alt="Avatar" className="w-20 h-20 rounded-full object-cover border-2 border-slate-100" />
@@ -142,7 +142,7 @@ export default function Profile() {
               accept="image/*"
               className="hidden"
             />
-          </div>
+          </div> */}
 
           <div className="space-y-4">
             <div>

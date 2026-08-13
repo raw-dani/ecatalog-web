@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\StoreSubscriber;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NewProductNotificationMail;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -92,6 +95,15 @@ class ProductController extends Controller
         $validated['unit'] = $validated['unit'] ?? 'pcs';
 
         $product = Product::create($validated);
+
+        try {
+            $subscribers = StoreSubscriber::where('is_active', true)->get();
+            foreach ($subscribers as $subscriber) {
+                Mail::to($subscriber->email)->send(new NewProductNotificationMail($product, $subscriber));
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Failed to send new product notification: ' . $e->getMessage());
+        }
 
         return new ProductResource($product);
     }

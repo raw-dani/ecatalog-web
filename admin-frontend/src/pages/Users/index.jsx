@@ -540,11 +540,8 @@ const getSortIcon = (field) => {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex gap-2">
-                        <button onClick={() => setDetailModal({ open: true, userId: user.id })} className="text-slate-500 hover:text-slate-700 text-sm flex items-center justify-center w-5 h-5" title="Detail">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 9.3 12 9.3" />
-                            <path d="M12 14.4c-3.2 0-5.8 2.6-5.8 5.8v2.4h11.6v-2.4c0-3.2-2.6-5.8-5.8-5.8z" />
-                          </svg>
+                        <button onClick={() => setDetailModal({ open: true, userId: user.id })} className="text-primary-600 hover:underline text-sm">                          
+                          Detail
                         </button>
                         {canManage ? (
                           <>

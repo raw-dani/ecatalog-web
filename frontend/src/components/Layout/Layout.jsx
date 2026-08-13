@@ -5,6 +5,7 @@ import Footer from './Footer';
 import { useCart } from '../../context/CartContext';
 import { getSettings } from '../../services/cartService';
 import GoogleIntegration from '../SEO/GoogleIntegration';
+import WhatsAppButton from '../WhatsAppButton/WhatsAppButton';
 
 export default function Layout() {
   const { totalItems } = useCart();
@@ -18,10 +19,11 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col">
       <GoogleIntegration />
       <Header cartCount={totalItems} settings={settings} />
-      <main className="flex-1">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6 pb-6">
         <Outlet />
       </main>
       <Footer settings={settings} />
+      <WhatsAppButton whatsappNumber={settings?.store_whatsapp} />
     </div>
   );
 }

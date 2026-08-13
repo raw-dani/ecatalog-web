@@ -80,17 +80,31 @@ class LicenseService
                 if (!empty($result['data']['token'])) {
                     Cache::put('license_token', $result['data']['token'], $ttl);
                 }
+            } else {
+                $ttl = config('license.grace_period_hours', 0) * 60;
+                if ($ttl <= 0) {
+                    $ttl = 5;
+                }
+                Cache::put($cacheKey, $result, $ttl);
             }
 
             return $result;
         } catch (\Exception $e) {
             Log::error('License verification failed: ' . $e->getMessage());
 
-            return [
+            $fallback = [
                 'status' => 'error',
                 'code' => 500,
                 'message' => 'Gagal terhubung ke license server: ' . $e->getMessage(),
             ];
+
+            $ttl = config('license.grace_period_hours', 0) * 60;
+            if ($ttl <= 0) {
+                $ttl = 5;
+            }
+            Cache::put($cacheKey, $fallback, $ttl);
+
+            return $fallback;
         }
     }
 

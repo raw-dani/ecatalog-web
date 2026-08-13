@@ -1,0 +1,3565 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GM Sport - Store</title>
+
+    <style>
+
+        /* =========================================================
+           RESET
+        ========================================================= */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+
+            background: #f7f7f8;
+            color: #171717;
+
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input {
+            font-family: inherit;
+        }
+
+        button {
+            border: 0;
+            cursor: pointer;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+
+        /* =========================================================
+           VARIABLES
+        ========================================================= */
+
+        :root {
+
+            --primary: #111111;
+
+            --primary-hover: #2b2b2b;
+
+            --background: #f7f7f8;
+
+            --white: #ffffff;
+
+            --border: #e8e8e8;
+
+            --muted: #777777;
+
+            --light: #f1f1f2;
+
+            --danger: #ff3040;
+
+            --success: #16a34a;
+
+            --blue: #1683ff;
+
+            --radius: 16px;
+
+        }
+
+
+        /* =========================================================
+           HEADER
+        ========================================================= */
+
+        .header {
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 1000;
+
+            height: 64px;
+
+            background:
+                rgba(255, 255, 255, 0.94);
+
+            backdrop-filter:
+                blur(18px);
+
+            -webkit-backdrop-filter:
+                blur(18px);
+
+            border-bottom:
+                1px solid var(--border);
+
+        }
+
+
+        .header-inner {
+
+            max-width: 1280px;
+
+            height: 100%;
+
+            margin: auto;
+
+            padding: 0 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 25px;
+
+        }
+
+
+        /* LOGO */
+
+        .logo {
+
+            flex-shrink: 0;
+
+            font-size: 22px;
+
+            font-weight: 800;
+
+            letter-spacing: -0.8px;
+
+        }
+
+
+        .logo span {
+
+            font-weight: 400;
+
+            color: #777;
+
+        }
+
+
+        /* SEARCH */
+
+        .search-box {
+
+            flex: 1;
+
+            max-width: 550px;
+
+            margin: auto;
+
+            position: relative;
+
+        }
+
+
+        .search-box input {
+
+            width: 100%;
+
+            height: 42px;
+
+            border: none;
+
+            outline: none;
+
+            border-radius: 999px;
+
+            background: #f1f1f2;
+
+            padding:
+                0 45px 0 18px;
+
+            font-size: 13px;
+
+            color: #222;
+
+        }
+
+
+        .search-box input:focus {
+
+            box-shadow:
+                0 0 0 2px #111;
+
+        }
+
+
+        .search-icon {
+
+            position: absolute;
+
+            right: 15px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            font-size: 17px;
+
+            color: #666;
+
+        }
+
+
+        /* HEADER ACTION */
+
+        .header-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+        }
+
+
+        .header-button {
+
+            width: 40px;
+
+            height: 40px;
+
+            display: grid;
+
+            place-items: center;
+
+            border-radius: 50%;
+
+            background: transparent;
+
+            font-size: 20px;
+
+            transition: .2s;
+
+        }
+
+
+        .header-button:hover {
+
+            background: #f1f1f2;
+
+        }
+
+
+        .header-avatar {
+
+            width: 36px;
+
+            height: 36px;
+
+            border-radius: 50%;
+
+            background: #111;
+
+            color: #fff;
+
+            display: grid;
+
+            place-items: center;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
+
+        /* =========================================================
+           MAIN CONTAINER
+        ========================================================= */
+
+        .container {
+
+            width: 100%;
+
+            max-width: 1280px;
+
+            margin: auto;
+
+            padding:
+                22px 20px 80px;
+
+        }
+
+
+        /* =========================================================
+           SHOP PROFILE
+        ========================================================= */
+
+        .shop-profile {
+
+            background: var(--white);
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius);
+
+            padding: 25px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .shop-profile-main {
+
+            display: flex;
+
+            gap: 28px;
+
+            align-items: flex-start;
+
+        }
+
+
+        /* SHOP LOGO */
+
+        .shop-avatar {
+
+            flex: 0 0 120px;
+
+            width: 120px;
+
+            height: 120px;
+
+            border-radius: 50%;
+
+            overflow: hidden;
+
+            background: #eeeeee;
+
+            border:
+                1px solid var(--border);
+
+        }
+
+
+        .shop-avatar img {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: cover;
+
+        }
+
+
+        /* SHOP INFORMATION */
+
+        .shop-info {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
+        .shop-title {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+        }
+
+
+        .shop-name {
+
+            font-size: 23px;
+
+            font-weight: 800;
+
+            letter-spacing: -0.5px;
+
+        }
+
+
+        .verified {
+
+            width: 20px;
+
+            height: 20px;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: #fff;
+
+            display: grid;
+
+            place-items: center;
+
+            font-size: 11px;
+
+            font-weight: 800;
+
+        }
+
+
+        .shop-username {
+
+            color: #777;
+
+            font-size: 13px;
+
+            margin-top: 3px;
+
+        }
+
+
+        /* STATS */
+
+        .shop-stats {
+
+            display: flex;
+
+            gap: 30px;
+
+            margin:
+                16px 0 14px;
+
+        }
+
+
+        .shop-stat {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            font-size: 13px;
+
+        }
+
+
+        .shop-stat strong {
+
+            font-size: 15px;
+
+            font-weight: 750;
+
+        }
+
+
+        .shop-stat span {
+
+            color: #777;
+
+        }
+
+
+        /* BIO */
+
+        .shop-bio {
+
+            max-width: 650px;
+
+            font-size: 13px;
+
+            line-height: 1.55;
+
+        }
+
+
+        .shop-bio-title {
+
+            font-weight: 700;
+
+            margin-bottom: 2px;
+
+        }
+
+
+        .shop-location {
+
+            margin-top: 7px;
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 7px;
+
+            color: #777;
+
+            font-size: 12px;
+
+        }
+
+
+        /* ACTIONS */
+
+        .shop-actions {
+
+            display: flex;
+
+            gap: 8px;
+
+            margin-top: 16px;
+
+        }
+
+
+        .follow-button {
+
+            height: 38px;
+
+            padding: 0 18px;
+
+            border-radius: 9px;
+
+            background: var(--primary);
+
+            color: white;
+
+            font-size: 13px;
+
+            font-weight: 650;
+
+            transition: .2s;
+
+        }
+
+
+        .follow-button:hover {
+
+            background:
+                var(--primary-hover);
+
+        }
+
+
+        .follow-button.following {
+
+            background: #eeeeee;
+
+            color: #111;
+
+        }
+
+
+        .share-button {
+
+            height: 38px;
+
+            padding: 0 18px;
+
+            border-radius: 9px;
+
+            background: #f1f1f2;
+
+            color: #111;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        .share-button:hover {
+
+            background: #e8e8e8;
+
+        }
+
+
+        /* =========================================================
+           SHOP BENEFITS
+        ========================================================= */
+
+        .shop-benefits {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 10px;
+
+            margin-top: 22px;
+
+            padding-top: 20px;
+
+            border-top:
+                1px solid var(--border);
+
+        }
+
+
+        .benefit {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding: 12px;
+
+            background: #f8f8f8;
+
+            border-radius: 11px;
+
+        }
+
+
+        .benefit-icon {
+
+            width: 36px;
+
+            height: 36px;
+
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            background: #fff;
+
+            display: grid;
+
+            place-items: center;
+
+            font-size: 17px;
+
+        }
+
+
+        .benefit-text strong {
+
+            display: block;
+
+            font-size: 12px;
+
+        }
+
+
+        .benefit-text span {
+
+            display: block;
+
+            margin-top: 2px;
+
+            color: #777;
+
+            font-size: 10px;
+
+        }
+
+
+        /* =========================================================
+           CATEGORY / SHOP TABS
+        ========================================================= */
+
+        .shop-tabs-wrapper {
+
+            position: sticky;
+
+            top: 64px;
+
+            z-index: 50;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .shop-tabs {
+
+            background:
+                rgba(255,255,255,.94);
+
+            backdrop-filter:
+                blur(15px);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 13px;
+
+            padding: 5px;
+
+            display: flex;
+
+            gap: 4px;
+
+            overflow-x: auto;
+
+            scrollbar-width: none;
+
+        }
+
+
+        .shop-tabs::-webkit-scrollbar {
+
+            display: none;
+
+        }
+
+
+        .tab {
+
+            flex: 0 0 auto;
+
+            height: 36px;
+
+            padding:
+                0 16px;
+
+            border-radius: 9px;
+
+            background: transparent;
+
+            color: #666;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            transition: .2s;
+
+        }
+
+
+        .tab:hover {
+
+            background: #f1f1f2;
+
+            color: #111;
+
+        }
+
+
+        .tab.active {
+
+            background: #111;
+
+            color: #fff;
+
+        }
+
+
+        /* =========================================================
+           SECTION HEADER
+        ========================================================= */
+
+        .section-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 16px;
+
+        }
+
+
+        .section-title {
+
+            font-size: 21px;
+
+            font-weight: 800;
+
+            letter-spacing: -.3px;
+
+        }
+
+
+        .section-subtitle {
+
+            color: #777;
+
+            font-size: 12px;
+
+            margin-top: 3px;
+
+        }
+
+
+        .sort-button {
+
+            height: 36px;
+
+            padding:
+                0 13px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 8px;
+
+            background: #fff;
+
+            font-size: 12px;
+
+        }
+
+
+        /* =========================================================
+           PRODUCT GRID
+        ========================================================= */
+
+        .product-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, minmax(0, 1fr));
+
+            gap: 17px;
+
+        }
+
+
+        /* =========================================================
+           PRODUCT CARD
+        ========================================================= */
+
+        .product-card {
+
+            background: #fff;
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                var(--radius);
+
+            overflow: hidden;
+
+            transition:
+                transform .2s,
+                box-shadow .2s;
+
+        }
+
+
+        .product-card:hover {
+
+            transform:
+                translateY(-3px);
+
+            box-shadow:
+                0 12px 30px
+                rgba(0,0,0,.07);
+
+        }
+
+
+        /* =========================================================
+           PRODUCT IMAGE
+        ========================================================= */
+
+        .product-image {
+
+            position: relative;
+
+            aspect-ratio: 1 / 1.12;
+
+            overflow: hidden;
+
+            background: #eee;
+
+        }
+
+
+        .product-image img {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: cover;
+
+            transition:
+                transform .5s;
+
+        }
+
+
+        .product-card:hover
+        .product-image img {
+
+            transform:
+                scale(1.04);
+
+        }
+
+
+        /* BADGE */
+
+        .product-badge {
+
+            position: absolute;
+
+            top: 11px;
+
+            left: 11px;
+
+            padding:
+                5px 8px;
+
+            background: #111;
+
+            color: #fff;
+
+            border-radius: 6px;
+
+            font-size: 9px;
+
+            font-weight: 750;
+
+            letter-spacing: .2px;
+
+        }
+
+
+        .product-badge.discount {
+
+            background: var(--danger);
+
+        }
+
+
+        .product-badge.new {
+
+            background: var(--blue);
+
+        }
+
+
+        /* IMAGE ACTION */
+
+        .image-actions {
+
+            position: absolute;
+
+            right: 11px;
+
+            bottom: 11px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+        }
+
+
+        .image-action {
+
+            width: 39px;
+
+            height: 39px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255,255,255,.94);
+
+            display: grid;
+
+            place-items: center;
+
+            font-size: 18px;
+
+            box-shadow:
+                0 4px 12px
+                rgba(0,0,0,.12);
+
+            transition: .2s;
+
+        }
+
+
+        .image-action:hover {
+
+            transform:
+                scale(1.05);
+
+        }
+
+
+        .image-action.liked {
+
+            color: var(--danger);
+
+        }
+
+
+        /* =========================================================
+           PRODUCT CONTENT
+        ========================================================= */
+
+        .product-content {
+
+            padding: 14px;
+
+        }
+
+
+        /* SELLER */
+
+        .seller {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            margin-bottom: 9px;
+
+            color: #777;
+
+            font-size: 10px;
+
+        }
+
+
+        .seller-avatar {
+
+            width: 25px;
+
+            height: 25px;
+
+            border-radius: 50%;
+
+            background: #eee;
+
+            display: grid;
+
+            place-items: center;
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            color: #555;
+
+        }
+
+
+        .seller-name {
+
+            color: #555;
+
+            font-weight: 600;
+
+        }
+
+
+        /* PRODUCT NAME */
+
+        .product-name {
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            line-height: 1.4;
+
+            margin-bottom: 6px;
+
+        }
+
+
+        /* DESCRIPTION */
+
+        .product-description {
+
+            color: #777;
+
+            font-size: 11px;
+
+            line-height: 1.5;
+
+            margin-bottom: 9px;
+
+            display: -webkit-box;
+
+            -webkit-line-clamp: 2;
+
+            -webkit-box-orient: vertical;
+
+            overflow: hidden;
+
+        }
+
+
+        /* PRODUCT INFO */
+
+        .product-info {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: flex-end;
+
+            gap: 8px;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .product-price {
+
+            font-size: 17px;
+
+            font-weight: 800;
+
+        }
+
+
+        .product-old-price {
+
+            display: block;
+
+            margin-top: 2px;
+
+            color: #999;
+
+            font-size: 10px;
+
+            font-weight: 400;
+
+            text-decoration: line-through;
+
+        }
+
+
+        .product-rating {
+
+            font-size: 10px;
+
+            color: #666;
+
+            white-space: nowrap;
+
+        }
+
+
+        .product-rating strong {
+
+            color: #111;
+
+        }
+
+
+        /* =========================================================
+           PRODUCT FOOTER
+        ========================================================= */
+
+        .product-footer {
+
+            display: flex;
+
+            gap: 7px;
+
+        }
+
+
+        .cart-button {
+
+            width: 40px;
+
+            height: 38px;
+
+            flex-shrink: 0;
+
+            border-radius: 9px;
+
+            background: #f1f1f2;
+
+            font-size: 17px;
+
+            transition: .2s;
+
+        }
+
+
+        .cart-button:hover {
+
+            background: #e6e6e7;
+
+        }
+
+
+        .buy-button {
+
+            flex: 1;
+
+            height: 38px;
+
+            border-radius: 9px;
+
+            background: #111;
+
+            color: #fff;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+            transition: .2s;
+
+        }
+
+
+        .buy-button:hover {
+
+            background: #333;
+
+        }
+
+
+        /* =========================================================
+           MOBILE BOTTOM NAV
+        ========================================================= */
+
+        .bottom-nav {
+
+            display: none;
+
+            position: fixed;
+
+            left: 0;
+
+            right: 0;
+
+            bottom: 0;
+
+            height: 64px;
+
+            background:
+                rgba(255,255,255,.96);
+
+            backdrop-filter:
+                blur(15px);
+
+            border-top:
+                1px solid var(--border);
+
+            z-index: 2000;
+
+            align-items: center;
+
+            justify-content: space-around;
+
+        }
+
+
+        .bottom-item {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 3px;
+
+            color: #777;
+
+            font-size: 19px;
+
+        }
+
+
+        .bottom-item span {
+
+            font-size: 9px;
+
+        }
+
+
+        .bottom-item.active {
+
+            color: #111;
+
+        }
+
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @media (max-width: 1000px) {
+
+            .product-grid {
+
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+
+            }
+
+        }
+
+
+        @media (max-width: 750px) {
+
+            .header {
+
+                height: 58px;
+
+            }
+
+
+            .header-inner {
+
+                padding: 0 14px;
+
+                gap: 10px;
+
+            }
+
+
+            .logo {
+
+                font-size: 18px;
+
+            }
+
+
+            .search-box {
+
+                max-width: none;
+
+            }
+
+
+            .search-box input {
+
+                height: 38px;
+
+                font-size: 11px;
+
+            }
+
+
+            .header-button {
+
+                width: 34px;
+
+                height: 34px;
+
+            }
+
+
+            .header-avatar {
+
+                width: 32px;
+
+                height: 32px;
+
+            }
+
+
+            .container {
+
+                padding:
+                    12px 12px 80px;
+
+            }
+
+
+            .shop-profile {
+
+                padding: 17px;
+
+            }
+
+
+            .shop-profile-main {
+
+                gap: 16px;
+
+            }
+
+
+            .shop-avatar {
+
+                width: 82px;
+
+                height: 82px;
+
+                flex-basis: 82px;
+
+            }
+
+
+            .shop-name {
+
+                font-size: 18px;
+
+            }
+
+
+            .shop-username {
+
+                font-size: 11px;
+
+            }
+
+
+            .shop-stats {
+
+                gap: 17px;
+
+                margin:
+                    10px 0;
+
+            }
+
+
+            .shop-stat {
+
+                display: block;
+
+            }
+
+
+            .shop-stat strong {
+
+                display: block;
+
+                font-size: 13px;
+
+            }
+
+
+            .shop-stat span {
+
+                font-size: 9px;
+
+            }
+
+
+            .shop-bio {
+
+                font-size: 11px;
+
+            }
+
+
+            .shop-location {
+
+                font-size: 10px;
+
+            }
+
+
+            .shop-actions {
+
+                margin-top: 11px;
+
+            }
+
+
+            .follow-button,
+            .share-button {
+
+                height: 34px;
+
+                padding: 0 13px;
+
+                font-size: 10px;
+
+            }
+
+
+            .shop-benefits {
+
+                grid-template-columns: 1fr;
+
+                gap: 6px;
+
+                margin-top: 15px;
+
+                padding-top: 15px;
+
+            }
+
+
+            .benefit {
+
+                padding: 9px;
+
+            }
+
+
+            .shop-tabs-wrapper {
+
+                top: 58px;
+
+            }
+
+
+            .shop-tabs {
+
+                border-radius: 10px;
+
+            }
+
+
+            .tab {
+
+                height: 34px;
+
+                padding: 0 13px;
+
+                font-size: 10px;
+
+            }
+
+
+            .section-title {
+
+                font-size: 18px;
+
+            }
+
+
+            .section-subtitle {
+
+                font-size: 10px;
+
+            }
+
+
+            .product-grid {
+
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+
+                gap: 10px;
+
+            }
+
+
+            .product-content {
+
+                padding: 11px;
+
+            }
+
+
+            .product-name {
+
+                font-size: 12px;
+
+            }
+
+
+            .product-description {
+
+                font-size: 10px;
+
+            }
+
+
+            .product-price {
+
+                font-size: 14px;
+
+            }
+
+
+            .product-old-price {
+
+                font-size: 9px;
+
+            }
+
+
+            .product-rating {
+
+                font-size: 9px;
+
+            }
+
+
+            .product-footer {
+
+                gap: 5px;
+
+            }
+
+
+            .cart-button {
+
+                width: 35px;
+
+                height: 35px;
+
+            }
+
+
+            .buy-button {
+
+                height: 35px;
+
+                font-size: 9px;
+
+            }
+
+
+            .image-action {
+
+                width: 34px;
+
+                height: 34px;
+
+                font-size: 16px;
+
+            }
+
+
+            .bottom-nav {
+
+                display: flex;
+
+            }
+
+        }
+
+
+        @media (max-width: 420px) {
+
+            .header-actions
+            .header-button:first-child {
+
+                display: none;
+
+            }
+
+
+            .shop-profile-main {
+
+                align-items: flex-start;
+
+            }
+
+
+            .shop-avatar {
+
+                width: 70px;
+
+                height: 70px;
+
+                flex-basis: 70px;
+
+            }
+
+
+            .shop-name {
+
+                font-size: 16px;
+
+            }
+
+
+            .shop-stats {
+
+                gap: 12px;
+
+            }
+
+
+            .product-grid {
+
+                gap: 8px;
+
+            }
+
+
+            .product-content {
+
+                padding: 9px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header class="header">
+
+    <div class="header-inner">
+
+
+        <!-- LOGO -->
+
+        <a href="#" class="logo">
+            GM<span>SPORT</span>
+        </a>
+
+
+        <!-- SEARCH -->
+
+        <div class="search-box">
+
+            <input
+                type="search"
+                id="searchInput"
+                placeholder="Cari produk, brand, kategori..."
+            >
+
+            <span class="search-icon">
+                🔍
+            </span>
+
+        </div>
+
+
+        <!-- HEADER ACTIONS -->
+
+        <div class="header-actions">
+
+            <button
+                class="header-button"
+                title="Wishlist"
+            >
+                ♡
+            </button>
+
+
+            <button
+                class="header-button"
+                title="Keranjang"
+            >
+                🛒
+            </button>
+
+
+            <button
+                class="header-button"
+                title="Notifikasi"
+            >
+                🔔
+            </button>
+
+
+            <div class="header-avatar">
+                RA
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main class="container">
+
+
+    <!-- =====================================================
+         SHOP PROFILE
+    ====================================================== -->
+
+    <section class="shop-profile">
+
+
+        <div class="shop-profile-main">
+
+
+            <!-- SHOP LOGO -->
+
+            <div class="shop-avatar">
+
+                <img
+                    src="https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=300&q=85"
+                    alt="GM Sport"
+                >
+
+            </div>
+
+
+            <!-- SHOP INFORMATION -->
+
+            <div class="shop-info">
+
+
+                <!-- NAME -->
+
+                <div class="shop-title">
+
+                    <h1 class="shop-name">
+                        GM SPORT
+                    </h1>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <!-- USERNAME -->
+
+                <div class="shop-username">
+                    @gmsport
+                </div>
+
+
+                <!-- STATS -->
+
+                <div class="shop-stats">
+
+
+                    <div class="shop-stat">
+
+                        <strong>
+                            1.248
+                        </strong>
+
+                        <span>
+                            Produk
+                        </span>
+
+                    </div>
+
+
+                    <div class="shop-stat">
+
+                        <strong>
+                            18,5K
+                        </strong>
+
+                        <span>
+                            Pengikut
+                        </span>
+
+                    </div>
+
+
+                    <div class="shop-stat">
+
+                        <strong>
+                            4.9
+                        </strong>
+
+                        <span>
+                            Rating
+                        </span>
+
+                    </div>
+
+
+                    <div class="shop-stat">
+
+                        <strong>
+                            98%
+                        </strong>
+
+                        <span>
+                            Respon
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BIO -->
+
+                <div class="shop-bio">
+
+                    <div class="shop-bio-title">
+                        GM SPORT
+                    </div>
+
+                    <div>
+                        Sepatu outdoor, hiking & lifestyle.
+                        Produk berkualitas untuk aktivitas
+                        dan petualangan Anda.
+                    </div>
+
+
+                    <div class="shop-location">
+
+                        <span>
+                            📍 Surabaya, Indonesia
+                        </span>
+
+                        <span>
+                            •
+                        </span>
+
+                        <span>
+                            🚚 Pengiriman seluruh Indonesia
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACTION -->
+
+                <div class="shop-actions">
+
+                    <button
+                        class="follow-button"
+                        id="followButton"
+                    >
+                        + Ikuti Toko
+                    </button>
+
+
+                    <button
+                        class="share-button"
+                        id="shareButton"
+                    >
+                        ↗ Bagikan
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             SHOP BENEFITS
+        ================================================== -->
+
+        <div class="shop-benefits">
+
+
+            <div class="benefit">
+
+                <div class="benefit-icon">
+                    🚚
+                </div>
+
+                <div class="benefit-text">
+
+                    <strong>
+                        Pengiriman Cepat
+                    </strong>
+
+                    <span>
+                        Diproses setiap hari
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="benefit">
+
+                <div class="benefit-icon">
+                    ✓
+                </div>
+
+                <div class="benefit-text">
+
+                    <strong>
+                        Produk Original
+                    </strong>
+
+                    <span>
+                        Terjamin kualitasnya
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="benefit">
+
+                <div class="benefit-icon">
+                    ↩
+                </div>
+
+                <div class="benefit-text">
+
+                    <strong>
+                        Garansi Produk
+                    </strong>
+
+                    <span>
+                        Belanja lebih aman
+                    </span>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         SHOP TABS
+    ====================================================== -->
+
+    <div class="shop-tabs-wrapper">
+
+        <nav class="shop-tabs" id="shopTabs">
+
+
+            <button
+                class="tab active"
+                data-category="all"
+            >
+                Untuk Anda
+            </button>
+
+
+            <button
+                class="tab"
+                data-category="product"
+            >
+                Semua Produk
+            </button>
+
+
+            <button
+                class="tab"
+                data-category="new"
+            >
+                Terbaru
+            </button>
+
+
+            <button
+                class="tab"
+                data-category="best"
+            >
+                Terlaris
+            </button>
+
+
+            <button
+                class="tab"
+                data-category="promo"
+            >
+                Promo
+            </button>
+
+
+            <button
+                class="tab"
+                data-category="shoes"
+            >
+                Sepatu
+            </button>
+
+
+            <button
+                class="tab"
+                data-category="outdoor"
+            >
+                Outdoor
+            </button>
+
+
+            <button
+                class="tab"
+                data-category="fashion"
+            >
+                Fashion
+            </button>
+
+
+        </nav>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         PRODUCT HEADER
+    ====================================================== -->
+
+    <div class="section-header">
+
+
+        <div>
+
+            <h2 class="section-title">
+                Temukan Produk
+            </h2>
+
+            <div class="section-subtitle">
+                Produk pilihan dari GM SPORT
+            </div>
+
+        </div>
+
+
+        <button class="sort-button">
+            ↕ Urutkan
+        </button>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         PRODUCT GRID
+    ====================================================== -->
+
+    <section
+        class="product-grid"
+        id="productGrid"
+    >
+
+
+        <!-- =================================================
+             PRODUCT 1
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="best shoes"
+            data-name="SNTA Mountain Outdoor Shoes"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=85"
+                    alt="SNTA Mountain Outdoor Shoes"
+                >
+
+
+                <span class="product-badge discount">
+                    -25%
+                </span>
+
+
+                <div class="image-actions">
+
+
+                    <button
+                        class="image-action like-button"
+                        aria-label="Like"
+                    >
+                        ♡
+                    </button>
+
+
+                    <button
+                        class="image-action"
+                        aria-label="Share"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    SNTA Mountain Outdoor Shoes
+                </h3>
+
+
+                <p class="product-description">
+                    Sepatu outdoor ringan dengan grip kuat
+                    untuk hiking dan perjalanan.
+                </p>
+
+
+                <div class="product-info">
+
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp299.000
+                        </div>
+
+                        <div class="product-old-price">
+                            Rp399.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.9</strong>
+                        (128)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('SNTA Mountain Outdoor Shoes')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('SNTA Mountain Outdoor Shoes')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- =================================================
+             PRODUCT 2
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="best fashion"
+            data-name="Premium Basic T-Shirt"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=85"
+                    alt="Premium Basic T-Shirt"
+                >
+
+
+                <span class="product-badge">
+                    BEST SELLER
+                </span>
+
+
+                <div class="image-actions">
+
+                    <button
+                        class="image-action like-button"
+                    >
+                        ♡
+                    </button>
+
+                    <button
+                        class="image-action"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    Premium Basic T-Shirt
+                </h3>
+
+
+                <p class="product-description">
+                    Cotton premium dengan material nyaman
+                    untuk penggunaan sehari-hari.
+                </p>
+
+
+                <div class="product-info">
+
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp129.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.8</strong>
+                        (92)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('Premium Basic T-Shirt')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('Premium Basic T-Shirt')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- =================================================
+             PRODUCT 3
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="outdoor best"
+            data-name="Outdoor Backpack 35L"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=85"
+                    alt="Outdoor Backpack"
+                >
+
+
+                <div class="image-actions">
+
+                    <button
+                        class="image-action like-button"
+                    >
+                        ♡
+                    </button>
+
+                    <button
+                        class="image-action"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    Outdoor Backpack 35L
+                </h3>
+
+
+                <p class="product-description">
+                    Tas hiking waterproof dengan kapasitas
+                    besar dan desain ergonomis.
+                </p>
+
+
+                <div class="product-info">
+
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp459.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.7</strong>
+                        (76)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('Outdoor Backpack 35L')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('Outdoor Backpack 35L')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- =================================================
+             PRODUCT 4
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="new"
+            data-name="Wireless Headphone Pro"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=85"
+                    alt="Wireless Headphone"
+                >
+
+
+                <span class="product-badge new">
+                    NEW
+                </span>
+
+
+                <div class="image-actions">
+
+                    <button
+                        class="image-action like-button"
+                    >
+                        ♡
+                    </button>
+
+                    <button
+                        class="image-action"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    Wireless Headphone Pro
+                </h3>
+
+
+                <p class="product-description">
+                    Wireless headphone dengan noise
+                    cancellation dan baterai hingga 40 jam.
+                </p>
+
+
+                <div class="product-info">
+
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp799.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.9</strong>
+                        (213)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('Wireless Headphone Pro')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('Wireless Headphone Pro')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- =================================================
+             PRODUCT 5
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="promo shoes"
+            data-name="SNTA Alpha Hiking Shoes"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=800&q=85"
+                    alt="SNTA Alpha Hiking Shoes"
+                >
+
+
+                <span class="product-badge discount">
+                    -30%
+                </span>
+
+
+                <div class="image-actions">
+
+                    <button
+                        class="image-action like-button"
+                    >
+                        ♡
+                    </button>
+
+                    <button
+                        class="image-action"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    SNTA Alpha Hiking Shoes
+                </h3>
+
+
+                <p class="product-description">
+                    Sepatu hiking dengan outsole agresif
+                    dan desain nyaman digunakan.
+                </p>
+
+
+                <div class="product-info">
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp349.000
+                        </div>
+
+                        <div class="product-old-price">
+                            Rp499.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.9</strong>
+                        (184)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('SNTA Alpha Hiking Shoes')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('SNTA Alpha Hiking Shoes')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- =================================================
+             PRODUCT 6
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="outdoor new"
+            data-name="Trekking Jacket Outdoor"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?auto=format&fit=crop&w=800&q=85"
+                    alt="Outdoor Jacket"
+                >
+
+
+                <span class="product-badge new">
+                    NEW
+                </span>
+
+
+                <div class="image-actions">
+
+                    <button
+                        class="image-action like-button"
+                    >
+                        ♡
+                    </button>
+
+                    <button
+                        class="image-action"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    Trekking Jacket Outdoor
+                </h3>
+
+
+                <p class="product-description">
+                    Jaket outdoor ringan dan tahan angin
+                    untuk aktivitas trekking.
+                </p>
+
+
+                <div class="product-info">
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp399.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.8</strong>
+                        (67)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('Trekking Jacket Outdoor')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('Trekking Jacket Outdoor')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- =================================================
+             PRODUCT 7
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="best shoes"
+            data-name="Trail Running Shoes"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=85"
+                    alt="Trail Running Shoes"
+                >
+
+
+                <span class="product-badge">
+                    TERLARIS
+                </span>
+
+
+                <div class="image-actions">
+
+                    <button
+                        class="image-action like-button"
+                    >
+                        ♡
+                    </button>
+
+                    <button
+                        class="image-action"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    Trail Running Shoes
+                </h3>
+
+
+                <p class="product-description">
+                    Sepatu trail dengan grip maksimal
+                    untuk medan berbatu.
+                </p>
+
+
+                <div class="product-info">
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp429.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.8</strong>
+                        (145)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('Trail Running Shoes')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('Trail Running Shoes')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- =================================================
+             PRODUCT 8
+        ================================================== -->
+
+        <article
+            class="product-card"
+            data-category="promo outdoor"
+            data-name="Camping Backpack 45L"
+        >
+
+            <div class="product-image">
+
+
+                <img
+                    src="https://images.unsplash.com/photo-1622260614153-03223fb72052?auto=format&fit=crop&w=800&q=85"
+                    alt="Camping Backpack"
+                >
+
+
+                <span class="product-badge discount">
+                    PROMO
+                </span>
+
+
+                <div class="image-actions">
+
+                    <button
+                        class="image-action like-button"
+                    >
+                        ♡
+                    </button>
+
+                    <button
+                        class="image-action"
+                    >
+                        ↗
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="product-content">
+
+
+                <div class="seller">
+
+                    <div class="seller-avatar">
+                        G
+                    </div>
+
+                    <span class="seller-name">
+                        GM SPORT
+                    </span>
+
+                    <span class="verified">
+                        ✓
+                    </span>
+
+                </div>
+
+
+                <h3 class="product-name">
+                    Camping Backpack 45L
+                </h3>
+
+
+                <p class="product-description">
+                    Backpack kapasitas besar untuk camping
+                    dan perjalanan outdoor.
+                </p>
+
+
+                <div class="product-info">
+
+                    <div>
+
+                        <div class="product-price">
+                            Rp499.000
+                        </div>
+
+                        <div class="product-old-price">
+                            Rp649.000
+                        </div>
+
+                    </div>
+
+
+                    <div class="product-rating">
+                        ⭐ <strong>4.7</strong>
+                        (81)
+                    </div>
+
+                </div>
+
+
+                <div class="product-footer">
+
+                    <button
+                        class="cart-button"
+                        onclick="addToCart('Camping Backpack 45L')"
+                    >
+                        🛒
+                    </button>
+
+
+                    <button
+                        class="buy-button"
+                        onclick="buyProduct('Camping Backpack 45L')"
+                    >
+                        Beli Sekarang
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+    </section>
+
+
+</main>
+
+
+
+<!-- =========================================================
+     MOBILE BOTTOM NAV
+========================================================= -->
+
+<nav class="bottom-nav">
+
+
+    <a
+        href="#"
+        class="bottom-item active"
+    >
+
+        🏠
+
+        <span>
+            Home
+        </span>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="bottom-item"
+    >
+
+        🔎
+
+        <span>
+            Explore
+        </span>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="bottom-item"
+    >
+
+        ➕
+
+        <span>
+            Jual
+        </span>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="bottom-item"
+    >
+
+        🛒
+
+        <span>
+            Cart
+        </span>
+
+    </a>
+
+
+    <a
+        href="#"
+        class="bottom-item"
+    >
+
+        👤
+
+        <span>
+            Profile
+        </span>
+
+    </a>
+
+
+</nav>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+
+    /* =========================================================
+       LIKE PRODUCT
+    ========================================================= */
+
+    const likeButtons =
+        document.querySelectorAll(
+            ".like-button"
+        );
+
+
+    likeButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            function(event) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                this.classList.toggle("liked");
+
+
+                if (
+                    this.classList.contains("liked")
+                ) {
+
+                    this.innerHTML = "♥";
+
+                } else {
+
+                    this.innerHTML = "♡";
+
+                }
+
+            }
+        );
+
+    });
+
+
+
+    /* =========================================================
+       FOLLOW STORE
+    ========================================================= */
+
+    const followButton =
+        document.getElementById(
+            "followButton"
+        );
+
+
+    followButton.addEventListener(
+        "click",
+        function() {
+
+
+            this.classList.toggle(
+                "following"
+            );
+
+
+            if (
+                this.classList.contains(
+                    "following"
+                )
+            ) {
+
+                this.innerHTML =
+                    "✓ Mengikuti";
+
+            } else {
+
+                this.innerHTML =
+                    "+ Ikuti Toko";
+
+            }
+
+        }
+    );
+
+
+
+    /* =========================================================
+       SHARE STORE
+    ========================================================= */
+
+    const shareButton =
+        document.getElementById(
+            "shareButton"
+        );
+
+
+    shareButton.addEventListener(
+        "click",
+        async function() {
+
+
+            const shareData = {
+
+                title:
+                    "GM SPORT",
+
+                text:
+                    "Kunjungi toko GM SPORT",
+
+                url:
+                    window.location.href
+
+            };
+
+
+            if (
+                navigator.share
+            ) {
+
+                try {
+
+                    await navigator.share(
+                        shareData
+                    );
+
+                } catch(error) {
+
+                    console.log(
+                        "Share dibatalkan"
+                    );
+
+                }
+
+            } else {
+
+                try {
+
+                    await navigator.clipboard.writeText(
+                        window.location.href
+                    );
+
+                    alert(
+                        "Link toko berhasil disalin."
+                    );
+
+                } catch(error) {
+
+                    alert(
+                        "Silakan salin URL halaman ini."
+                    );
+
+                }
+
+            }
+
+        }
+    );
+
+
+
+    /* =========================================================
+       CATEGORY FILTER
+    ========================================================= */
+
+    const tabs =
+        document.querySelectorAll(
+            ".tab"
+        );
+
+
+    const products =
+        document.querySelectorAll(
+            ".product-card"
+        );
+
+
+    tabs.forEach(tab => {
+
+
+        tab.addEventListener(
+            "click",
+            function() {
+
+
+                /* Remove active */
+
+                tabs.forEach(item => {
+
+                    item.classList.remove(
+                        "active"
+                    );
+
+                });
+
+
+                /* Active selected */
+
+                this.classList.add(
+                    "active"
+                );
+
+
+                const category =
+                    this.dataset.category;
+
+
+                products.forEach(product => {
+
+
+                    const productCategory =
+                        product.dataset.category;
+
+
+                    if (
+                        category === "all" ||
+                        category === "product"
+                    ) {
+
+                        product.style.display =
+                            "";
+
+                        return;
+
+                    }
+
+
+                    if (
+                        productCategory
+                            .includes(category)
+                    ) {
+
+                        product.style.display =
+                            "";
+
+                    } else {
+
+                        product.style.display =
+                            "none";
+
+                    }
+
+                });
+
+            }
+        );
+
+    });
+
+
+
+    /* =========================================================
+       SEARCH PRODUCT
+    ========================================================= */
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+
+    searchInput.addEventListener(
+        "input",
+        function() {
+
+
+            const keyword =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+
+            products.forEach(product => {
+
+
+                const productName =
+                    product
+                        .dataset
+                        .name
+                        .toLowerCase();
+
+
+                if (
+                    productName
+                        .includes(keyword)
+                ) {
+
+                    product.style.display =
+                        "";
+
+                } else {
+
+                    product.style.display =
+                        "none";
+
+                }
+
+            });
+
+        }
+    );
+
+
+
+    /* =========================================================
+       ADD TO CART
+    ========================================================= */
+
+    function addToCart(productName) {
+
+        alert(
+            productName +
+            " berhasil ditambahkan ke keranjang."
+        );
+
+    }
+
+
+
+    /* =========================================================
+       BUY PRODUCT
+    ========================================================= */
+
+    function buyProduct(productName) {
+
+        alert(
+            "Membuka halaman produk: " +
+            productName
+        );
+
+    }
+
+
+</script>
+
+
+</body>
+</html>
