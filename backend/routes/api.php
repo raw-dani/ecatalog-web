@@ -19,7 +19,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\BankAccountController as AdminBankAccountController;
 
-Route::middleware('check.license')->group(function () {
+Route::middleware(['check.license', 'cache.headers'])->group(function () {
     Route::get('/settings', [SettingController::class, 'index']);
     Route::get('/bank-accounts', [BankAccountController::class, 'index']);
 
