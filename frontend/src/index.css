@@ -543,7 +543,7 @@
 }
 
 .shop-theme .shop-tabs-wrapper {
-  position: sticky;
+  position: static;
   top: 64px;
   z-index: 50;
   margin-bottom: 20px;

@@ -22,8 +22,8 @@ export default function ProductFilter({ onFilterChange, className = '' }) {
 
   return (
     <form onSubmit={handleSubmit} className={formClassName}>
-      <div className="flex flex-col sm:flex-row gap-3 items-end">
-        <div className="flex-1">
+      <div className="flex flex-col gap-3">
+        <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Urutkan</label>
           <select
             value={sort}
@@ -38,8 +38,8 @@ export default function ProductFilter({ onFilterChange, className = '' }) {
           </select>
         </div>
 
-        <div className="flex gap-2">
-          <div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
             <label className="block text-xs font-medium text-gray-500 mb-1">Harga Min</label>
             <div className="relative">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
@@ -47,12 +47,12 @@ export default function ProductFilter({ onFilterChange, className = '' }) {
                 type="number"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
-                className="w-28 border border-gray-200 rounded-lg pl-8 pr-2 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="w-full border border-gray-200 rounded-lg pl-8 pr-2 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 placeholder="0"
               />
             </div>
           </div>
-          <div>
+          <div className="flex-1">
             <label className="block text-xs font-medium text-gray-500 mb-1">Harga Max</label>
             <div className="relative">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
@@ -60,21 +60,24 @@ export default function ProductFilter({ onFilterChange, className = '' }) {
                 type="number"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-28 border border-gray-200 rounded-lg pl-8 pr-2 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="w-full border border-gray-200 rounded-lg pl-8 pr-2 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 placeholder="Max"
               />
             </div>
           </div>
+        </div>
+
+        <div className="flex gap-2">
           <button
             type="submit"
-            className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex-1 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
           >
             Filter
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="px-3 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex-1 px-3 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-100 transition-colors"
             title="Reset filter"
           >
             Reset

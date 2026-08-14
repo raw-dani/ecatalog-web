@@ -23,7 +23,7 @@ export default function WhatsAppButton({ whatsappNumber, children }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:scale-105 transition"
+      className="fixed bottom-20 right-4 sm:bottom-5 sm:right-5 z-40 inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg hover:scale-105 transition"
       aria-label="Chat WhatsApp"
       title="Chat WhatsApp"
     >

@@ -370,48 +370,6 @@ export default function Products() {
         )}
       </section>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="bottom-nav">
-        <Link to="/" className="bottom-item">
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span>Home</span>
-        </Link>
-        <Link to="/produk" className="bottom-item active">
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <span>Explore</span>
-        </Link>
-        <Link to="/kategori" className="bottom-item">
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-          <span>Kategori</span>
-        </Link>
-        <Link to="/keranjang" className="bottom-item">
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="9" cy="21" r="1" />
-            <circle cx="20" cy="21" r="1" />
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-          </svg>
-          <span>Cart</span>
-        </Link>
-        <Link to="/kontak" className="bottom-item">
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <span>Profile</span>
-        </Link>
-      </nav>
-
       {/* Subscribe Modal */}
       {showSubscribeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
