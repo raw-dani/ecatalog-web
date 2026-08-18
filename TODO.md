@@ -120,3 +120,34 @@
 - User Frontend: katalog, cart, order (WhatsApp), order tracking
 - QA/UAT checklist + dokumentasi deploy singkat
 
+---
+
+## H. Automatic License Lock / Suspend (Baru)
+
+### Ringkasan
+Saat license di-suspend oleh License Manager, aplikasi harus langsung mengunci halaman frontend dan admin dengan overlay/tampilan khusus, bukan hanya mengembalikan error API.
+
+### H1. Backend — Response & Middleware
+1) Pastikan `CheckLicense` middleware mengembalikan respons konsisten untuk JSON dan non-JSON saat license invalid/suspend — **1 jam**
+2) Tambah endpoint publik `/license/status` (jika belum) yang mengembalikan status license saat ini untuk frontend — **1 jam**
+3) Update `config/cors.php` agar path `/license/status` termasuk dalam CORS yang diizinkan — **0.5 jam**
+
+### H2. Frontend Customer (`frontend/`)
+4) Buat `LicenseContext` / global axios interceptor yang mendeteksi `license_error: true` dari response API — **2 jam**
+5) Buat komponen overlay `LicenseLocked` untuk menampilkan pesan lock/suspend di frontend — **2 jam**
+6) Integrasikan overlay ke `App.jsx` agar muncul di semua halaman customer saat license terkunci — **1 jam**
+7) Tambah polling ringan ke `/license/status` untuk mendeteksi perubahan status tanpa perlu reload — **1 jam**
+
+### H3. Admin Frontend (`admin-frontend/`)
+8) Tambah response interceptor global yang sama untuk admin API — **1 jam**
+9) Buat overlay `LicenseLocked` untuk admin panel — **1.5 jam**
+10) Integrasikan overlay ke `App.jsx` admin agar muncul di semua halaman admin saat license terkunci — **0.5 jam**
+11) Pastikan halaman login admin tetap bisa diakses meskipun license suspend, untuk aktivasi ulang — **0.5 jam**
+
+### H4. QA & Testing
+12) Test skenario suspend license di License Manager → frontend locked, admin locked, API blocked — **2 jam**
+13) Test skenario grace period / reconnect → lock otomatis hilang tanpa reload — **1 jam**
+14) Update `CPANEL_INSTALL.md` atau README dengan penjelasan mekanisme lock — **0.5 jam**
+
+**Sub-total H ≈ 14.5 jam**
+

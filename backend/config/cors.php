@@ -15,11 +15,11 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'admin/*', 'sanctum/csrf-cookie', 'settings', 'categories', 'products', 'cart', 'orders', 'bank-accounts'],
+    'paths' => ['api/*', 'admin/*', 'sanctum/csrf-cookie', 'settings', 'categories', 'products', 'cart', 'orders', 'bank-accounts', 'license/*', 'verify-license'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['https://ecatalog.gmteknologi.com', 'https://admin-ecatalog.gmteknologi.com'],
 
     'allowed_origins_patterns' => [],
 

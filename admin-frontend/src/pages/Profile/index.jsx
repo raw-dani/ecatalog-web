@@ -26,7 +26,7 @@ export default function Profile() {
           email: adminData.email || '',
           avatar: null,
         });
-        setCurrentAvatar(adminData.avatar ? `http://localhost:8000/storage/${adminData.avatar}` : '');
+        setCurrentAvatar(adminData.avatar || '');
       } catch (err) {
         console.error('Failed to load profile:', err);
       } finally {

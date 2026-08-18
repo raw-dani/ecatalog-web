@@ -2,9 +2,9 @@
 
 Aplikasi E-Catalog ini terdiri dari 3 bagian yang harus di-deploy secara terpisah:
 
-1. **Backend API** (Laravel) → `https://api-ecatalog.hanjayateknologi.com`
-2. **Frontend Customer** (React) → `https://ecatalog.hanjayateknologi.com`
-3. **Admin Panel** (React) → `http://admin-ecatalog.hanjayateknologi.com`
+1. **Backend API** (Laravel) → `https://api-ecatalog.gmteknologi.com`
+2. **Frontend Customer** (React) → `https://ecatalog.gmteknologi.com`
+3. **Admin Panel** (React) → `https://admin-ecatalog.gmteknologi.com`
 
 ---
 
@@ -70,11 +70,16 @@ Catat detail koneksi:
 Edit file `.env` di `public_html/api-ecatalog/.env`:
 
 ```env
-APP_NAME=E-Catalog API
+APP_NAME="E-Catalog"
 APP_ENV=production
-APP_KEY=base64:YOUR_GENERATED_KEY_HERE
+APP_KEY=base64:GENERATE_DI_SERVER_DENGAN_PHP_ARTISAN_KEY:GENERATE
 APP_DEBUG=false
-APP_URL=https://api-ecatalog.hanjayateknologi.com
+APP_URL=https://api-ecatalog.gmteknologi.com
+
+APP_FRONTEND_URL=https://ecatalog.gmteknologi.com
+APP_ADMIN_FRONTEND_URL=https://admin-ecatalog.gmteknologi.com
+VITE_API_URL=https://api-ecatalog.gmteknologi.com/api
+ASSET_URL=https://api-ecatalog.gmteknologi.com/storage
 
 DB_CONNECTION=mysql
 DB_HOST=localhost
@@ -89,18 +94,20 @@ FILESYSTEM_DISK=local
 QUEUE_CONNECTION=sync
 SESSION_DRIVER=file
 SESSION_LIFETIME=120
+SESSION_DOMAIN=.gmteknologi.com
+
+SANCTUM_STATEFUL_DOMAINS=ecatalog.gmteknologi.com,admin-ecatalog.gmteknologi.com
 
 MAIL_MAILER=log
-MAIL_FROM_ADDRESS=noreply@hanjayateknologi.com
-MAIL_FROM_NAME=E-Catalog
+MAIL_FROM_ADDRESS=noreply@gmteknologi.com
+MAIL_FROM_NAME="E-Catalog"
 
-FRONTEND_URL=https://ecatalog.hanjayateknologi.com
-ADMIN_URL=http://admin-ecatalog.hanjayateknologi.com
+LICENSE_DOMAIN=gmteknologi.com
 ```
 
 ### Generate APP_KEY
 
-Setelah mengedit `.env`, jalankan:
+Setelah mengedit `.env`, jalankan di server:
 
 ```bash
 cd public_html/api-ecatalog
@@ -120,12 +127,12 @@ Buat file `.env.production` di masing-masing folder frontend:
 
 **Frontend (`frontend/.env.production`):**
 ```
-VITE_API_URL=https://api-ecatalog.hanjayateknologi.com/api
+VITE_API_URL=https://api-ecatalog.gmteknologi.com/api
 ```
 
 **Admin Frontend (`admin-frontend/.env.production`):**
 ```
-VITE_API_URL=https://api-ecatalog.hanjayateknologi.com/api
+VITE_API_URL=https://api-ecatalog.gmteknologi.com/api
 ```
 
 > **Penting:** Sertakan `/api` di akhir URL. Laravel routes API menggunakan prefix `/api`, jadi request frontend harus ke `/api/categories`, bukan `/categories`.
@@ -167,31 +174,40 @@ php artisan migrate --force
 php artisan db:seed --force
 ```
 
-### 4.2 Verifikasi
+### 4.2 Buat Storage Link
 
-Buka `https://api-ecatalog.hanjayateknologi.com/api/settings` di browser untuk memastikan API berjalan.
+Agar gambar dan file upload bisa diakses via URL:
+
+```bash
+cd public_html/api-ecatalog
+php artisan storage:link
+```
+
+### 4.3 Verifikasi
+
+Buka `https://api-ecatalog.gmteknologi.com/api/settings` di browser untuk memastikan API berjalan.
 
 ---
 
 ## 5. Konfigurasi SSL (HTTPS)
 
-### 5.1 Untuk Subdomain
+### 5.1 Untuk Semua Subdomain
 
 Di cPanel, buka **SSL/TLS** atau **Let's Encrypt** (jika tersedia):
 
-1. Aktifkan SSL untuk `api-ecatalog.hanjayateknologi.com`
-2. Aktifkan SSL untuk `ecatalog.hanjayateknologi.com`
-3. Untuk `admin-ecatalog.hanjayateknologi.com`, disarankan juga menggunakan HTTPS
+1. Aktifkan SSL untuk `api-ecatalog.gmteknologi.com`
+2. Aktifkan SSL untuk `ecatalog.gmteknologi.com`
+3. Aktifkan SSL untuk `admin-ecatalog.gmteknologi.com`
 
 ### 5.2 Force HTTPS di Laravel
 
 Di `.env` backend, pastikan:
 
 ```env
-APP_URL=https://api-ecatalog.hanjayateknologi.com
+APP_URL=https://api-ecatalog.gmteknologi.com
 ```
 
-Dan tambahkan di `bootstrap/app.php` atau `app/Providers/AppServiceProvider.php`:
+Dan tambahkan di `app/Providers/AppServiceProvider.php`:
 
 ```php
 public function boot(): void
@@ -202,6 +218,13 @@ public function boot(): void
 }
 ```
 
+Jangan lupa jalankan:
+
+```bash
+cd public_html/api-ecatalog
+php artisan config:cache
+```
+
 ---
 
 ## 6. Konfigurasi CORS
@@ -209,17 +232,28 @@ public function boot(): void
 Pastikan CORS diizinkan untuk domain frontend dan admin. Edit `config/cors.php`:
 
 ```php
-'paths' => ['api/*', 'admin/*', 'sanctum/csrf-cookie'],
-'allowed_methods' => ['*'],
-'allowed_origins' => [
-    'https://ecatalog.hanjayateknologi.com',
-    'https://admin-ecatalog.hanjayateknologi.com',
-    'http://admin-ecatalog.hanjayateknologi.com',
-],
-'allowed_headers' => ['*'],
-'exposed_headers' => [],
-'max_age' => 0,
-'supports_credentials' => false,
+<?php
+
+return [
+    'paths' => ['api/*', 'admin/*', 'sanctum/csrf-cookie', 'settings', 'categories', 'products', 'cart', 'orders', 'bank-accounts'],
+
+    'allowed_methods' => ['*'],
+
+    'allowed_origins' => [
+        'https://ecatalog.gmteknologi.com',
+        'https://admin-ecatalog.gmteknologi.com',
+    ],
+
+    'allowed_origins_patterns' => [],
+
+    'allowed_headers' => ['*'],
+
+    'exposed_headers' => [],
+
+    'max_age' => 0,
+
+    'supports_credentials' => false,
+];
 ```
 
 > **Penting:** Setelah mengubah `config/cors.php`, jalankan `php artisan config:clear` di server agar perubahan diterapkan.
@@ -247,6 +281,7 @@ public_html/
 │
 ├── ecatalog/              ← Frontend Customer (React)
 │   ├── index.html
+│   ├── .htaccess
 │   ├── assets/
 │   │   ├── index-XXXXX.js
 │   │   └── index-XXXXX.css
@@ -254,6 +289,7 @@ public_html/
 │
 └── admin-ecatalog/        ← Admin Panel (React)
     ├── index.html
+    ├── .htaccess
     ├── assets/
     │   ├── index-XXXXX.js
     │   └── index-XXXXX.css
@@ -262,9 +298,9 @@ public_html/
 
 ---
 
-## 8. Konfigurasi .htaccess (Apache)
+## 8. Konfigurasi .htaccess
 
-### Untuk Backend (`public_html/api-ecatalog/public/.htaccess`)
+### 8.1 Backend (`public_html/api-ecatalog/public/.htaccess`)
 
 Pastikan file `.htaccess` ada dan berisi:
 
@@ -292,62 +328,207 @@ Pastikan file `.htaccess` ada dan berisi:
 </IfModule>
 ```
 
-### Untuk Frontend Customer (`public_html/ecatalog/.htaccess`)
+### 8.2 Frontend Customer (`public_html/ecatalog/.htaccess`)
 
-Jika menggunakan SPA React Router, buat `.htaccess`:
+File ini sudah disertakan otomatis di `frontend/dist/.htaccess` setelah build. Jika tidak ada, buat manual:
 
 ```apache
+<IfModule LiteSpeed>
+  CacheEnable public /
+  CacheExpire 86400
+  CacheMaxExpire 2592000
+  CacheIgnoreCacheControl On
+  CacheIgnoreNoLastMod On
+  CacheStoreNoStore On
+  CacheStorePrivate On
+  CacheVaryOn User-Agent
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  ExpiresByType text/html "access plus 1 hour"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType application/x-javascript "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/font-woff "access plus 1 year"
+
+  <FilesMatch "\.(html|htm)$">
+    ExpiresByType text/html "access plus 1 hour"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "\.(json|xml)$">
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType application/xml "access plus 1 hour"
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+
+  <IfModule mod_headers.c>
+    Header set Vary "Accept-Encoding"
+    Header append Vary "User-Agent"
+  </IfModule>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css text/javascript application/javascript application/json application/xml application/xhtml+xml application/rss+xml application/atom+xml image/svg+xml
+  <IfModule mod_headers.c>
+    Header set X-Content-Type-Options nosniff
+    Header set X-Frame-Options SAMEORIGIN
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+  </IfModule>
+</IfModule>
+
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    RewriteRule ^index\.html$ - [L]
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule . /index.html [L]
+  RewriteEngine On
+  RewriteBase /
+
+  # SPA fallback: serve index.html for all non-file/non-folder requests
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.html [L]
+
+  RewriteRule ^(.*)\.(gzip|br)$ - [L]
+  RewriteCond %{HTTP:Accept-encoding} br
+  RewriteRule ^(.*)$ $1.br [QSA,L]
+  RewriteCond %{HTTP:Accept-encoding} gzip
+  RewriteRule ^(.*)$ $1.gz [QSA,L]
 </IfModule>
 ```
 
-### Untuk Admin Panel (`public_html/admin-ecatalog/.htaccess`)
+### 8.3 Admin Panel (`public_html/admin-ecatalog/.htaccess`)
 
 Sama seperti frontend customer:
 
 ```apache
+<IfModule LiteSpeed>
+  CacheEnable public /
+  CacheExpire 86400
+  CacheMaxExpire 2592000
+  CacheIgnoreCacheControl On
+  CacheIgnoreNoLastMod On
+  CacheStoreNoStore On
+  CacheStorePrivate On
+  CacheVaryOn User-Agent
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  ExpiresByType text/html "access plus 1 hour"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType application/x-javascript "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/font-woff "access plus 1 year"
+
+  <FilesMatch "\.(html|htm)$">
+    ExpiresByType text/html "access plus 1 hour"
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "\.(json|xml)$">
+    ExpiresByType application/json "access plus 1 hour"
+    ExpiresByType application/xml "access plus 1 hour"
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+
+  <IfModule mod_headers.c>
+    Header set Vary "Accept-Encoding"
+    Header append Vary "User-Agent"
+  </IfModule>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css text/javascript application/javascript application/json application/xml application/xhtml+xml application/rss+xml application/atom+xml image/svg+xml
+  <IfModule mod_headers.c>
+    Header set X-Content-Type-Options nosniff
+    Header set X-Frame-Options SAMEORIGIN
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+  </IfModule>
+</IfModule>
+
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    RewriteRule ^index\.html$ - [L]
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule . /index.html [L]
+  RewriteEngine On
+  RewriteBase /
+
+  # SPA fallback: serve index.html for all non-file/non-folder requests
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.html [L]
+
+  RewriteRule ^(.*)\.(gzip|br)$ - [L]
+  RewriteCond %{HTTP:Accept-encoding} br
+  RewriteRule ^(.*)$ $1.br [QSA,L]
+  RewriteCond %{HTTP:Accept-encoding} gzip
+  RewriteRule ^(.*)$ $1.gz [QSA,L]
 </IfModule>
 ```
 
 ---
 
-## 9. Verifikasi Deploy
+## 9. Symlink Storage untuk Gambar
 
-### 9.1 Cek Backend API
+Karena frontend dan admin di-deploy di subdomain terpisah, mereka tidak bisa mengakses symlink `storage` dari backend secara default. Buat symlink di setiap frontend:
+
+### Via SSH di cPanel:
+
+```bash
+# Untuk frontend customer (ecatalog.gmteknologi.com)
+ln -s /home/USERNAME/public_html/api-ecatalog/storage/app/public /home/USERNAME/public_html/ecatalog/storage
+
+# Untuk admin panel (admin-ecatalog.gmteknologi.com)
+ln -s /home/USERNAME/public_html/api-ecatalog/storage/app/public /home/USERNAME/public_html/admin-ecatalog/storage
+```
+
+Ganti `USERNAME` dengan username cPanel Anda. Pastikan path sesuai dengan lokasi sebenarnya di server.
+
+Pastikan folder `storage/app/public` memiliki permission yang benar (755 atau 775).
+
+> **Catatan:** Jika symlink tidak bisa dibuat di shared hosting, alternatifnya adalah mengakses gambar via URL API penuh (`https://api-ecatalog.gmteknologi.com/storage/...`). Backend sudah dikonfigurasi untuk mengembalikan URL asset lengkap melalui `ASSET_URL`.
+
+---
+
+## 10. Verifikasi Deploy
+
+### 10.1 Cek Backend API
 
 Buka di browser:
-- `https://api-ecatalog.hanjayateknologi.com/api/settings` → Harusnya mengembalikan data pengaturan toko
-- `https://api-ecatalog.hanjayateknologi.com/api/products/featured` → Harusnya mengembalikan produk unggulan
-- `https://api-ecatalog.hanjayateknologi.com/api/categories` → Harusnya mengembalikan daftar kategori
+- `https://api-ecatalog.gmteknologi.com/api/settings` → Harusnya mengembalikan data pengaturan toko
+- `https://api-ecatalog.gmteknologi.com/api/products/featured` → Harusnya mengembalikan produk unggulan
+- `https://api-ecatalog.gmteknologi.com/api/categories` → Harusnya mengembalikan daftar kategori
 
-### 9.2 Cek Frontend Customer
+### 10.2 Cek Frontend Customer
 
 Buka di browser:
-- `https://ecatalog.hanjayateknologi.com` → Halaman beranda harus tampil
+- `https://ecatalog.gmteknologi.com` → Halaman beranda harus tampil
+- `https://ecatalog.gmteknologi.com/produk` → Halaman produk harus tampil
 - Klik produk, tambah ke keranjang, checkout → Pastikan API terhubung
 
-### 9.3 Cek Admin Panel
+### 10.3 Cek Admin Panel
 
 Buka di browser:
-- `http://admin-ecatalog.hanjayateknologi.com` → Halaman login admin harus tampil
+- `https://admin-ecatalog.gmteknologi.com` → Halaman login admin harus tampil
 - Login dengan kredensial admin → Dashboard harus tampil
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### Error 500 di Backend
 
@@ -367,6 +548,10 @@ Jika browser melaporkan error CORS, pastikan:
 2. Jalankan `php artisan config:clear` di server setelah mengubah CORS config
 3. Pastikan `HandleCors` middleware ada di `app/Http/Kernel.php` (global middleware stack)
 
+### Error 404 di Frontend/Admin (SPA Route)
+
+Pastikan file `.htaccess` ada di folder frontend dan admin dengan SPA rewrite rule. Jika tidak ada, buat manual sesuai bagian 8.
+
 ### Error 404 di API (Frontend tidak bisa akses backend)
 
 Ini terjadi karena frontend membuat request ke URL tanpa prefix `/api`.
@@ -374,7 +559,7 @@ Ini terjadi karena frontend membuat request ke URL tanpa prefix `/api`.
 **Solusi:**
 1. Pastikan file `.env.production` ada di folder `frontend/` dan `admin-frontend/` dengan isi:
    ```
-   VITE_API_URL=https://api-ecatalog.hanjayateknologi.com/api
+   VITE_API_URL=https://api-ecatalog.gmteknologi.com/api
    ```
 2. Rebuild frontend:
    ```bash
@@ -393,41 +578,35 @@ Ini terjadi karena document root subdomain tidak mengarah ke folder `public/` La
 3. Save
 
 Atau jika tidak bisa mengubah document root, pindahkan isi folder `public/` ke root subdomain dan sesuaikan path di `index.php`:
-- `__DIR__.'/../storage/...'` → `__DIR__.'/storage/...`
-- `__DIR__.'/../vendor/...'` → `__DIR__.'/vendor/...`
-- `__DIR__.'/../bootstrap/...'` → `__DIR__.'/bootstrap/...`
+- `__DIR__.'/../storage/...'` → `__DIR__.'/storage/...'`
+- `__DIR__.'/../vendor/...'` → `__DIR__.'/vendor/...'`
+- `__DIR__.'/../bootstrap/...'` → `__DIR__.'/bootstrap/...'`
 
-### CORS Error
+### Gambar Tidak Muncul (404 pada /storage/...)
 
-Periksa `config/cors.php` sudah mencakup semua domain frontend.
+Ini terjadi karena symlink storage. Pastikan symlink sudah dibuat sesuai bagian 9, atau akses gambar via URL API penuh.
+
+Via SSH di cPanel:
+
+```bash
+# Untuk frontend customer (ecatalog.gmteknologi.com)
+ln -s /home/USERNAME/public_html/api-ecatalog/storage/app/public /home/USERNAME/public_html/ecatalog/storage
+
+# Untuk admin panel (admin-ecatalog.gmteknologi.com)
+ln -s /home/USERNAME/public_html/api-ecatalog/storage/app/public /home/USERNAME/public_html/admin-ecatalog/storage
+```
+
+Ganti `USERNAME` dengan username cPanel Anda. Pastikan path ke backend storage sesuai dengan lokasi sebenarnya di server Anda.
+
+Pastikan folder `storage/app/public` memiliki permission yang benar (755 atau 775).
 
 ### Database Connection Error
 
 Pastikan `.env` sudah benar dan database user memiliki akses ke database.
 
-### Gambar Tidak Muncul (404 pada /storage/...)
-
-Ini terjadi karena `php artisan storage:link` membuat symlink di `public/storage` → `storage/app/public`, tetapi frontend dan admin frontend di-deploy ke subdomain yang berbeda dengan document root terpisah. Masing-masing subdomain tidak memiliki akses ke symlink di backend.
-
-**Solusi:** Buat symlink `storage` di setiap document root frontend yang menunjuk ke storage backend.
-
-Via SSH di cPanel:
-
-```bash
-# Untuk frontend customer (ecatalog.hanjayateknologi.com)
-ln -s /home/hanjayateknologi/public_html/api-ecatalog.hanjayateknologi.com/storage/app/public /home/hanjayateknologi/public_html/ecatalog/storage
-
-# Untuk admin panel (admin-ecatalog.hanjayateknologi.com)
-ln -s /home/hanjayateknologi/public_html/api-ecatalog.hanjayateknologi.com/storage/app/public /home/hanjayateknologi/public_html/admin-ecatalog/storage
-```
-
-Ganti `hanjayateknologi` dengan username cPanel Anda. Pastikan path ke backend storage sesuai dengan lokasi sebenarnya di server Anda.
-
-Pastikan folder `storage/app/public` memiliki permission yang benar (755 atau 775).
-
 ---
 
-## 11. Update Aplikasi di Production
+## 12. Update Aplikasi di Production
 
 ### Update Backend
 
@@ -461,7 +640,7 @@ npm run build
 
 ---
 
-## 12. Keamanan Produksi
+## 13. Keamanan Produksi
 
 1. **Nonaktifkan debug mode** — Pastikan `APP_DEBUG=false` di `.env`
 2. **Gunakan HTTPS** — Semua subdomain harus menggunakan SSL

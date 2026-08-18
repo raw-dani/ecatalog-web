@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { setLicenseLocked } from '../utils/licenseLock';
 
 const memoryCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
@@ -26,15 +27,18 @@ api.interceptors.response.use(
     }
     return response;
   },
-  async (error) => {
+  (error) => {
     const config = error.config;
-    if (!config || config._retry) return Promise.reject(error);
+    if (config && !config._retry) {
+      const cacheKey = `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
+      const cached = memoryCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return Promise.resolve(cached.response);
+      }
+    }
 
-    const cacheKey = `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
-    const cached = memoryCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return Promise.resolve(cached.response);
+    if (error.response?.data?.license_error) {
+      setLicenseLocked(error.response.data.message);
     }
 
     return Promise.reject(error);
@@ -42,3 +46,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+

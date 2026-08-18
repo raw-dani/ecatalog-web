@@ -1,6 +1,10 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
+import LicenseLocked from './components/License/LicenseLocked';
+import { onLicenseLocked } from './utils/licenseLock';
+import api from './services/api';
 import AdminLayout from './components/Layout/AdminLayout';
 import Login from './pages/Auth/Login';
 import ForgotPassword from './pages/Auth/ForgotPassword';
@@ -33,11 +37,75 @@ function PublicRoute({ children }) {
   return children;
 }
 
+function LicenseGate({ children }) {
+  const [locked, setLocked] = useState(false);
+  const [message, setMessage] = useState('');
+  const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/forgot-password' || window.location.pathname === '/reset-password';
+
+  useEffect(() => {
+    const unsubscribe = onLicenseLocked((msg) => {
+      if (msg) {
+        setMessage(msg);
+        setLocked(true);
+      } else {
+        setMessage('');
+        setLocked(false);
+      }
+    });
+
+    const checkLicense = async () => {
+      try {
+        const response = await api.get('/license/status');
+        const data = response.data || response;
+        if (data.status === 'invalid') {
+          setLicenseLockedLocal(data.message);
+        } else {
+          clearLicenseLockLocal();
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    checkLicense();
+    const interval = setInterval(checkLicense, 30000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }, []);
+
+  const setLicenseLockedLocal = (msg) => {
+    setMessage(msg || 'Lisensi tidak valid atau telah di-suspend.');
+    setLocked(true);
+  };
+
+  const clearLicenseLockLocal = () => {
+    setMessage('');
+    setLocked(false);
+  };
+
+  if (locked && !isAuthPage) {
+    return (
+      <LicenseLocked
+        message={message}
+        onActivate={() => {
+          window.location.href = '/settings';
+        }}
+      />
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <AuthProvider>
       <ToastProvider>
       <Router>
+        <LicenseGate>
         <Routes>
           <Route path="/login" element={
             <PublicRoute>
@@ -70,6 +138,7 @@ function App() {
             <Route path="change-password" element={<ChangePassword />} />
           </Route>
         </Routes>
+        </LicenseGate>
       </Router>
       </ToastProvider>
     </AuthProvider>
