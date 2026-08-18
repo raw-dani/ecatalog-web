@@ -9,4 +9,5 @@ return [
     'username' => env('LICENSE_USERNAME', null),
     'verify_ttl_hours' => env('LICENSE_VERIFY_TTL_HOURS', 24),
     'grace_period_hours' => env('LICENSE_GRACE_PERIOD_HOURS', 0),
+    'failure_cache_ttl_minutes' => env('LICENSE_FAILURE_CACHE_TTL_MINUTES', 5),
 ];

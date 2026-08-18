@@ -52,6 +52,52 @@ class LicenseService
             return $cached;
         }
 
+        $lock = Cache::lock('license_verify_lock_' . md5($fingerprint), 10);
+
+        if ($lock->get()) {
+            try {
+                $cached = Cache::get($cacheKey);
+                if ($cached && is_array($cached)) {
+                    return $cached;
+                }
+
+                $result = $this->doVerify($fingerprint, $domain, $username);
+
+                if (($result['status'] ?? '') === 'success') {
+                    $ttl = config('license.verify_ttl_hours', 24) * 60;
+                    Cache::put($cacheKey, $result, $ttl);
+
+                    if (!empty($result['data']['token'])) {
+                        Cache::put('license_token', $result['data']['token'], $ttl);
+                    }
+                } else {
+                    $ttl = config('license.failure_cache_ttl_minutes', 5);
+                    Cache::put($cacheKey, $result, $ttl);
+                }
+
+                return $result;
+            } finally {
+                $lock->release();
+            }
+        }
+
+        sleep(1);
+
+        $cached = Cache::get($cacheKey);
+        if ($cached && is_array($cached)) {
+            return $cached;
+        }
+
+        return [
+            'status' => 'success',
+            'code' => 200,
+            'message' => 'License verification in progress, using cached allowance.',
+            'pending' => true,
+        ];
+    }
+
+    private function doVerify(string $fingerprint, string $domain, string $username): array
+    {
         try {
             $response = Http::timeout(15)
                 ->withHeaders([
@@ -73,38 +119,15 @@ class LicenseService
             $result = $response->json();
             $result['http_code'] = $response->status();
 
-            if ($response->successful() && ($result['status'] ?? '') === 'success') {
-                $ttl = config('license.verify_ttl_hours', 24) * 60;
-                Cache::put($cacheKey, $result, $ttl);
-
-                if (!empty($result['data']['token'])) {
-                    Cache::put('license_token', $result['data']['token'], $ttl);
-                }
-            } else {
-                $ttl = config('license.grace_period_hours', 0) * 60;
-                if ($ttl <= 0) {
-                    $ttl = 5;
-                }
-                Cache::put($cacheKey, $result, $ttl);
-            }
-
             return $result;
         } catch (\Exception $e) {
             Log::error('License verification failed: ' . $e->getMessage());
 
-            $fallback = [
+            return [
                 'status' => 'error',
                 'code' => 500,
                 'message' => 'Gagal terhubung ke license server: ' . $e->getMessage(),
             ];
-
-            $ttl = config('license.grace_period_hours', 0) * 60;
-            if ($ttl <= 0) {
-                $ttl = 5;
-            }
-            Cache::put($cacheKey, $fallback, $ttl);
-
-            return $fallback;
         }
     }
 

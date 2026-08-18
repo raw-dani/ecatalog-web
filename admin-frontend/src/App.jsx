@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
@@ -19,6 +19,10 @@ import Users from './pages/Users';
 import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
 
+const LICENSE_STORAGE_KEY = 'ecatalog_admin_license_status';
+const LICENSE_STORAGE_TTL = 60 * 1000;
+const LICENSE_POLL_INTERVAL = 30000;
+
 function ProtectedRoute({ children }) {
   const { admin, loading } = useAuth();
 
@@ -37,54 +41,162 @@ function PublicRoute({ children }) {
   return children;
 }
 
+function getStoredLicense() {
+  try {
+    const raw = localStorage.getItem(LICENSE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(LICENSE_STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function setStoredLicense(status, message) {
+  try {
+    localStorage.setItem(
+      LICENSE_STORAGE_KEY,
+      JSON.stringify({ status, message, expiresAt: Date.now() + LICENSE_STORAGE_TTL })
+    );
+  } catch {
+    // ignore
+  }
+}
+
 function LicenseGate({ children }) {
   const [locked, setLocked] = useState(false);
   const [message, setMessage] = useState('');
+  const intervalRef = useRef(null);
+  const channelRef = useRef(null);
   const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/forgot-password' || window.location.pathname === '/reset-password';
 
+  const setLicenseLockedLocal = useCallback((msg) => {
+    setMessage(msg || 'Lisensi tidak valid atau telah di-suspend.');
+    setLocked(true);
+  }, []);
+
+  const clearLicenseLockLocal = useCallback(() => {
+    setMessage('');
+    setLocked(false);
+  }, []);
+
+  const checkLicense = useCallback(async () => {
+    const stored = getStoredLicense();
+    if (stored?.status === 'invalid') {
+      setLicenseLockedLocal(stored.message);
+      return;
+    }
+    if (stored?.status === 'valid') {
+      clearLicenseLockLocal();
+      return;
+    }
+
+    try {
+      const response = await api.get('/license/status');
+      const data = response.data || response;
+      if (data.status === 'invalid') {
+        setStoredLicense('invalid', data.message);
+        setLicenseLockedLocal(data.message);
+      } else {
+        setStoredLicense('valid', '');
+        clearLicenseLockLocal();
+      }
+    } catch {
+      // ignore
+    }
+  }, [setLicenseLockedLocal, clearLicenseLockLocal]);
+
   useEffect(() => {
+    const stored = getStoredLicense();
+    if (stored?.status === 'invalid') {
+      setMessage(stored.message || 'Lisensi tidak valid atau telah di-suspend.');
+      setLocked(true);
+    }
+
     const unsubscribe = onLicenseLocked((msg) => {
       if (msg) {
+        setStoredLicense('invalid', msg);
         setMessage(msg);
         setLocked(true);
       } else {
+        setStoredLicense('valid', '');
         setMessage('');
         setLocked(false);
       }
     });
 
-    const checkLicense = async () => {
-      try {
-        const response = await api.get('/license/status');
-        const data = response.data || response;
-        if (data.status === 'invalid') {
-          setLicenseLockedLocal(data.message);
-        } else {
-          clearLicenseLockLocal();
-        }
-      } catch {
-        // ignore
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ecatalog_license') : null;
+    channelRef.current = channel;
+
+    const handleMessage = (event) => {
+      const data = event.data;
+      if (!data || data.type !== 'license-status') return;
+      if (data.status === 'invalid') {
+        setStoredLicense('invalid', data.message);
+        setMessage(data.message);
+        setLocked(true);
+      } else if (data.status === 'valid') {
+        setStoredLicense('valid', '');
+        setMessage('');
+        setLocked(false);
       }
     };
 
-    checkLicense();
-    const interval = setInterval(checkLicense, 30000);
+    channel?.addEventListener('message', handleMessage);
+    window.addEventListener('storage', (event) => {
+      if (event.key === LICENSE_STORAGE_KEY && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          if (parsed.status === 'invalid') {
+            setMessage(parsed.message || 'Lisensi tidak valid atau telah di-suspend.');
+            setLocked(true);
+          } else if (parsed.status === 'valid') {
+            setMessage('');
+            setLocked(false);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    const startPolling = () => {
+      checkLicense();
+      intervalRef.current = setInterval(checkLicense, LICENSE_POLL_INTERVAL);
+    };
+
+    const stopPolling = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+
+    startPolling();
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        checkLicense();
+        startPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       unsubscribe();
-      clearInterval(interval);
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      channel?.removeEventListener('message', handleMessage);
+      channel?.close();
     };
-  }, []);
-
-  const setLicenseLockedLocal = (msg) => {
-    setMessage(msg || 'Lisensi tidak valid atau telah di-suspend.');
-    setLocked(true);
-  };
-
-  const clearLicenseLockLocal = () => {
-    setMessage('');
-    setLocked(false);
-  };
+  }, [checkLicense]);
 
   if (locked && !isAuthPage) {
     return (
