@@ -229,6 +229,12 @@ export default function ProductDetail() {
                 {product.category.name}
               </Link>
             )}
+            {product.brand && product.brand.logo && (
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-none w-fit mb-4 ml-0 md:ml-2">
+                <img src={product.brand.logo} alt={product.brand.name} className="w-5 h-5 object-contain rounded" />
+                {product.brand.name}
+              </div>
+            )}
 
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 leading-tight">{product.name}</h1>
 

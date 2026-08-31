@@ -103,6 +103,15 @@ export default function ShopProductCard({ product, storeName = 'Toko' }) {
 
         <div className="product-info">
           <div>
+            {product.category?.name && (
+              <div className="text-xs text-gray-500 mb-1">{product.category.name}</div>
+            )}
+            {product.brand && product.brand.logo && (
+              <div className="flex items-center gap-1.5 mb-1">
+                <img src={product.brand.logo} alt={product.brand.name} className="w-4 h-4 object-contain" />
+                <span className="text-xs text-gray-500">{product.brand.name}</span>
+              </div>
+            )}
             <div className="product-price">{formatCurrency(finalPrice)}</div>
             {hasDiscount && (
               <span className="product-old-price">{formatCurrency(product.price)}</span>

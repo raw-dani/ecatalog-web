@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class CategoryResource extends JsonResource
+class BrandResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -13,12 +13,12 @@ class CategoryResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'logo' => $this->logo ? '/storage/' . $this->logo : null,
             'description' => $this->description,
-            'image' => $this->image ? '/storage/' . $this->image : null,
-            'parent_id' => $this->parent_id,
             'is_active' => $this->is_active,
             'sort_order' => $this->sort_order,
-            'products_count' => $this->when(isset($this->products_count), $this->products_count),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

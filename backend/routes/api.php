@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\BankAccountController as AdminBankAccountController;
+use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 
 Route::middleware(['check.license', 'cache.headers'])->group(function () {
     Route::get('/settings', [SettingController::class, 'index']);
@@ -78,6 +79,17 @@ Route::middleware('auth:admin-api')->group(function () {
         Route::put('/admin/categories/{category}/toggle-status', [AdminCategoryController::class, 'toggleStatus']);
     });
 
+    // Brands — super_admin, admin, manager, demo
+    Route::middleware('role:super_admin,admin,manager,demo')->group(function () {
+        Route::get('/admin/brands', [AdminBrandController::class, 'index']);
+        Route::post('/admin/brands', [AdminBrandController::class, 'store']);
+        Route::get('/admin/brands/{brand}', [AdminBrandController::class, 'show']);
+        Route::put('/admin/brands/{brand}', [AdminBrandController::class, 'update']);
+        Route::delete('/admin/brands/{brand}', [AdminBrandController::class, 'destroy']);
+        Route::post('/admin/brands/{brand}/logo', [AdminBrandController::class, 'uploadLogo']);
+        Route::put('/admin/brands/{brand}/toggle-status', [AdminBrandController::class, 'toggleStatus']);
+    });
+
     // Products — super_admin, admin, manager, karyawan, demo
     Route::middleware('role:super_admin,admin,manager,karyawan,demo')->group(function () {
         Route::get('/admin/products', [AdminProductController::class, 'index']);
@@ -87,6 +99,7 @@ Route::middleware('auth:admin-api')->group(function () {
         Route::delete('/admin/products/{product}', [AdminProductController::class, 'destroy']);
         Route::post('/admin/products/{product}/images', [AdminProductController::class, 'uploadImages']);
         Route::delete('/admin/products/{product}/images', [AdminProductController::class, 'deleteImage']);
+        Route::put('/admin/products/{product}/images/order', [AdminProductController::class, 'reorderImages']);
         Route::post('/admin/products/{product}/duplicate', [AdminProductController::class, 'duplicate']);
         Route::post('/admin/products/bulk/delete', [AdminProductController::class, 'bulkDelete']);
         Route::post('/admin/products/bulk/toggle-status', [AdminProductController::class, 'bulkToggleStatus']);

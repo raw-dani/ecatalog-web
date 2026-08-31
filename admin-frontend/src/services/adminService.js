@@ -19,6 +19,7 @@ export const uploadProductImages = (id, formData) => api.post(`/admin/products/$
   headers: { 'Content-Type': 'multipart/form-data' },
 }).then(res => res.data);
 export const deleteProductImage = (id, image) => api.delete(`/admin/products/${id}/images`, { data: { image } }).then(res => res.data);
+export const reorderProductImages = (id, images) => api.put(`/admin/products/${id}/images/order`, { images }).then(res => res.data);
 export const duplicateProduct = (id) => api.post(`/admin/products/${id}/duplicate`).then(res => res.data);
 export const bulkDeleteProducts = (ids) => api.post('/admin/products/bulk/delete', { ids }).then(res => res.data);
 export const bulkToggleProductStatus = (ids, is_active) => api.post('/admin/products/bulk/toggle-status', { ids, is_active }).then(res => res.data);
@@ -35,6 +36,16 @@ export const uploadCategoryImage = (id, formData) => api.post(`/admin/categories
 }).then(res => res.data);
 export const toggleCategoryStatus = (id) => api.put(`/admin/categories/${id}/toggle-status`).then(res => res.data);
 export const exportCategoriesCsv = (params) => api.get('/admin/categories/export/csv', { params, responseType: 'blob' }).then(res => res.data);
+
+export const getBrands = (params) => api.get('/admin/brands', { params }).then(res => res.data);
+export const getBrand = (id) => api.get(`/admin/brands/${id}`).then(res => res.data);
+export const createBrand = (data) => api.post('/admin/brands', data).then(res => res.data);
+export const updateBrand = (id, data) => api.put(`/admin/brands/${id}`, data).then(res => res.data);
+export const deleteBrand = (id) => api.delete(`/admin/brands/${id}`).then(res => res.data);
+export const uploadBrandLogo = (id, formData) => api.post(`/admin/brands/${id}/logo`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+}).then(res => res.data);
+export const toggleBrandStatus = (id) => api.put(`/admin/brands/${id}/toggle-status`).then(res => res.data);
 
 export const getOrders = (params) => api.get('/admin/orders', { params }).then(res => res.data);
 export const getOrder = (id) => api.get(`/admin/orders/${id}`).then(res => res.data);

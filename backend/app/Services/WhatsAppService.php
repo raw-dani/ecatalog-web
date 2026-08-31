@@ -44,6 +44,9 @@ class WhatsAppService
         $message .= "\n📝 *Data Pemesan:*\n";
         $message .= "Nama: {$customerData['customer_name']}\n";
         $message .= "Telp: {$customerData['customer_phone']}\n";
+        if (!empty($customerData['customer_whatsapp'])) {
+            $message .= "WhatsApp: {$customerData['customer_whatsapp']}\n";
+        }
         if (!empty($customerData['customer_email'])) {
             $message .= "Email: {$customerData['customer_email']}\n";
         }

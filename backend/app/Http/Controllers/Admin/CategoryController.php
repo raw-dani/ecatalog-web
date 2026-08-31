@@ -108,7 +108,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'message' => 'Gambar berhasil diupload',
-            'url' => asset('storage/' . $path),
+            'url' => '/storage/' . $path,
         ]);
     }
 

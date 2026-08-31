@@ -10,6 +10,18 @@ export default function Cart() {
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsError, setSettingsError] = useState('');
   const [removingId, setRemovingId] = useState(null);
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerWhatsapp, setCustomerWhatsapp] = useState('');
+  const [contactError, setContactError] = useState('');
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('cart_customer_email');
+    const savedWa = localStorage.getItem('cart_customer_whatsapp');
+    if (savedEmail) setCustomerEmail(savedEmail);
+    if (savedWa) setCustomerWhatsapp(savedWa);
+  }, []);
+
+  const isContactValid = customerEmail.trim() !== '' && customerWhatsapp.trim() !== '';
 
   useEffect(() => {
     getSettings()
@@ -207,8 +219,50 @@ export default function Cart() {
                   </div>
                 </div>
 
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Data Kontak untuk Follow-up</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Email <span className="text-danger-500">*</span></label>
+                      <input
+                        type="email"
+                        value={customerEmail}
+                        onChange={(e) => {
+                          setCustomerEmail(e.target.value);
+                          localStorage.setItem('cart_customer_email', e.target.value);
+                          if (contactError) setContactError('');
+                        }}
+                        placeholder="email@example.com"
+                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none ${!isContactValid ? 'border-danger-500' : 'border-gray-300'}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Nomor WhatsApp <span className="text-danger-500">*</span></label>
+                      <input
+                        type="tel"
+                        value={customerWhatsapp}
+                        onChange={(e) => {
+                          setCustomerWhatsapp(e.target.value);
+                          localStorage.setItem('cart_customer_whatsapp', e.target.value);
+                          if (contactError) setContactError('');
+                        }}
+                        placeholder="6281234567890"
+                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none ${!isContactValid ? 'border-danger-500' : 'border-gray-300'}`}
+                      />
+                    </div>
+                    {!isContactValid && (
+                      <p className="text-xs text-danger-600">Email dan nomor WhatsApp harus diisi untuk melanjutkan checkout.</p>
+                    )}
+                  </div>
+                </div>
+
                 <button
                   onClick={() => {
+                    if (!isContactValid) {
+                      setContactError('Email dan nomor WhatsApp harus diisi.');
+                      return;
+                    }
+                    setContactError('');
                     const message = items.map(i => {
                       const p = i.product;
                       const name = p?.name || 'Produk';
@@ -218,13 +272,19 @@ export default function Cart() {
                       return `- ${name} x${i.quantity}: Rp ${lineTotal.toLocaleString('id-ID')}${note}`;
                     }).join('\n');
                     const total = subtotal.toLocaleString('id-ID');
-                    const text = `Halo, saya ingin memesan:\n\n${message}\n\nTotal: Rp ${total}`;
+                    let text = `Halo, saya ingin memesan:\n\n${message}\n\nTotal: Rp ${total}`;
+                    if (customerEmail) {
+                      text += `\n\nEmail: ${customerEmail}`;
+                    }
+                    if (customerWhatsapp) {
+                      text += `\nWhatsApp: ${customerWhatsapp}`;
+                    }
                     const url = `https://wa.me/${settings?.store_whatsapp}?text=${encodeURIComponent(text)}`;
                     window.open(url, '_blank');
                   }}
-                  disabled={settingsLoading || !settings?.store_whatsapp}
+                  disabled={settingsLoading || !settings?.store_whatsapp || !isContactValid}
                   className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-lg font-semibold transition-all duration-200 ${
-                    settingsLoading || !settings?.store_whatsapp
+                    settingsLoading || !settings?.store_whatsapp || !isContactValid
                       ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       : 'bg-success-500 text-white hover:bg-success-600 shadow-md hover:shadow-lg hover:shadow-success-500/30'
                   }`}

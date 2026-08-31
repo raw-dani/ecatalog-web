@@ -48,7 +48,7 @@ class SettingController extends Controller
         $settings = Setting::all()->map(function ($setting) {
             $value = $setting->value;
             if (in_array($setting->key, ['store_logo', 'store_hero_background', 'store_favicon']) && $value) {
-                $value = asset('storage/' . $value);
+                $value = '/storage/' . $value;
             }
             return [
                 'key' => $setting->key,
@@ -116,7 +116,7 @@ class SettingController extends Controller
 
         return response()->json([
             'message' => $settingKey === 'store_hero_background' ? 'Hero background berhasil diupload' : 'Logo berhasil diupload',
-            'url' => asset('storage/' . $path),
+            'url' => '/storage/' . $path,
         ]);
     }
 
@@ -140,7 +140,7 @@ class SettingController extends Controller
 
         return response()->json([
             'message' => 'Favicon berhasil diupload',
-            'url' => asset('storage/' . $path),
+            'url' => '/storage/' . $path,
         ]);
     }
 

@@ -136,7 +136,7 @@ class UserManagementController extends Controller
                 'id' => $admin->id,
                 'name' => $admin->name,
                 'email' => $admin->email,
-                'avatar' => $admin->avatar ? asset('storage/' . $admin->avatar) : null,
+                'avatar' => $admin->avatar ? '/storage/' . $admin->avatar : null,
                 'role' => $admin->role,
                 'roles' => $admin->roles->pluck('name'),
                 'is_active' => $admin->is_active,
@@ -299,7 +299,7 @@ class UserManagementController extends Controller
         return response()->json([
             'message' => 'Avatar berhasil diupload',
             'data' => [
-                'avatar' => asset('storage/' . $path),
+                'avatar' => '/storage/' . $path,
             ],
         ]);
     }

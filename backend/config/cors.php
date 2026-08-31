@@ -19,7 +19,13 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://ecatalog.gmteknologi.com', 'https://admin-ecatalog.gmteknologi.com'],
+    'allowed_origins' => array_filter([
+        env('APP_FRONTEND_URL'),
+        env('APP_ADMIN_FRONTEND_URL'),
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:8000',
+    ]),
 
     'allowed_origins_patterns' => [],
 

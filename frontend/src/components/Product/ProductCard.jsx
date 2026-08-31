@@ -13,7 +13,17 @@ export default function ProductCard({ product }) {
         </div>
         <div className="p-4">
           <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 line-clamp-2">{product.name}</h3>
-          <p className="text-sm text-gray-500 mt-1">{product.category?.name}</p>
+          <div className="mt-1">
+            {product.category?.name && (
+              <p className="text-sm text-gray-500">{product.category.name}</p>
+            )}
+            {product.brand && product.brand.logo && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <img src={product.brand.logo} alt={product.brand.name} className="w-4 h-4 object-contain" />
+                <span className="text-xs text-gray-500">{product.brand.name}</span>
+              </div>
+            )}
+          </div>
           <div className="mt-2">
             {product.discount_price && (
               <span className="text-sm text-gray-400 line-through mr-2">

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
-import LicenseLocked from './components/License/LicenseLocked';
 import { onLicenseLocked } from './utils/licenseLock';
 import api from './services/api';
 import AdminLayout from './components/Layout/AdminLayout';
@@ -12,6 +11,7 @@ import ResetPassword from './pages/Auth/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Categories from './pages/Categories';
+import Brands from './pages/Brands';
 import Orders from './pages/Orders';
 import Settings from './pages/Settings';
 import BankAccounts from './pages/BankAccounts';
@@ -22,6 +22,8 @@ import ChangePassword from './pages/ChangePassword';
 const LICENSE_STORAGE_KEY = 'ecatalog_admin_license_status';
 const LICENSE_STORAGE_TTL = 60 * 1000;
 const LICENSE_POLL_INTERVAL = 30000;
+
+const ALLOWED_SUSPENDED_PATHS = ['/settings'];
 
 function ProtectedRoute({ children }) {
   const { admin, loading } = useAuth();
@@ -67,31 +69,39 @@ function setStoredLicense(status, message) {
   }
 }
 
+function isSuspendedPath(pathname) {
+  if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password') {
+    return true;
+  }
+  return ALLOWED_SUSPENDED_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'));
+}
+
 function LicenseGate({ children }) {
-  const [locked, setLocked] = useState(false);
+  const [suspended, setSuspended] = useState(false);
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
   const intervalRef = useRef(null);
   const channelRef = useRef(null);
-  const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/forgot-password' || window.location.pathname === '/reset-password';
 
-  const setLicenseLockedLocal = useCallback((msg) => {
+  const setSuspendedLocal = useCallback((msg) => {
     setMessage(msg || 'Lisensi tidak valid atau telah di-suspend.');
-    setLocked(true);
+    setSuspended(true);
   }, []);
 
-  const clearLicenseLockLocal = useCallback(() => {
+  const clearSuspendedLocal = useCallback(() => {
     setMessage('');
-    setLocked(false);
+    setSuspended(false);
   }, []);
 
   const checkLicense = useCallback(async () => {
     const stored = getStoredLicense();
     if (stored?.status === 'invalid') {
-      setLicenseLockedLocal(stored.message);
+      setSuspendedLocal(stored.message);
       return;
     }
     if (stored?.status === 'valid') {
-      clearLicenseLockLocal();
+      clearSuspendedLocal();
       return;
     }
 
@@ -100,32 +110,32 @@ function LicenseGate({ children }) {
       const data = response.data || response;
       if (data.status === 'invalid') {
         setStoredLicense('invalid', data.message);
-        setLicenseLockedLocal(data.message);
+        setSuspendedLocal(data.message);
       } else {
         setStoredLicense('valid', '');
-        clearLicenseLockLocal();
+        clearSuspendedLocal();
       }
     } catch {
       // ignore
     }
-  }, [setLicenseLockedLocal, clearLicenseLockLocal]);
+  }, [setSuspendedLocal, clearSuspendedLocal]);
 
   useEffect(() => {
     const stored = getStoredLicense();
     if (stored?.status === 'invalid') {
       setMessage(stored.message || 'Lisensi tidak valid atau telah di-suspend.');
-      setLocked(true);
+      setSuspended(true);
     }
 
     const unsubscribe = onLicenseLocked((msg) => {
       if (msg) {
         setStoredLicense('invalid', msg);
         setMessage(msg);
-        setLocked(true);
+        setSuspended(true);
       } else {
         setStoredLicense('valid', '');
         setMessage('');
-        setLocked(false);
+        setSuspended(false);
       }
     });
 
@@ -138,11 +148,11 @@ function LicenseGate({ children }) {
       if (data.status === 'invalid') {
         setStoredLicense('invalid', data.message);
         setMessage(data.message);
-        setLocked(true);
+        setSuspended(true);
       } else if (data.status === 'valid') {
         setStoredLicense('valid', '');
         setMessage('');
-        setLocked(false);
+        setSuspended(false);
       }
     };
 
@@ -153,10 +163,10 @@ function LicenseGate({ children }) {
           const parsed = JSON.parse(event.newValue);
           if (parsed.status === 'invalid') {
             setMessage(parsed.message || 'Lisensi tidak valid atau telah di-suspend.');
-            setLocked(true);
+            setSuspended(true);
           } else if (parsed.status === 'valid') {
             setMessage('');
-            setLocked(false);
+            setSuspended(false);
           }
         } catch {
           // ignore
@@ -198,16 +208,11 @@ function LicenseGate({ children }) {
     };
   }, [checkLicense]);
 
-  if (locked && !isAuthPage) {
-    return (
-      <LicenseLocked
-        message={message}
-        onActivate={() => {
-          window.location.href = '/settings';
-        }}
-      />
-    );
-  }
+  useEffect(() => {
+    if (suspended && !isSuspendedPath(location.pathname)) {
+      navigate('/settings', { replace: true });
+    }
+  }, [suspended, location.pathname, navigate]);
 
   return <>{children}</>;
 }
@@ -242,6 +247,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="products" element={<Products />} />
             <Route path="categories" element={<Categories />} />
+            <Route path="brands" element={<Brands />} />
             <Route path="orders" element={<Orders />} />
             <Route path="settings" element={<Settings />} />
             <Route path="bank-accounts" element={<BankAccounts />} />

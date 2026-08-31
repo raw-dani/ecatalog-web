@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
-import { getProducts, getCategories, createProduct, updateProduct, deleteProduct, uploadProductImages, deleteProductImage, duplicateProduct, bulkDeleteProducts, bulkToggleProductStatus, bulkToggleProductFeatured, exportProductsCsv } from '../../services/adminService';
+import { getProducts, getCategories, getBrands, createProduct, updateProduct, deleteProduct, uploadProductImages, reorderProductImages, duplicateProduct, bulkDeleteProducts, bulkToggleProductStatus, bulkToggleProductFeatured, exportProductsCsv } from '../../services/adminService';
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 
@@ -7,6 +7,7 @@ const emptyForm = {
   name: '',
   slug: '',
   category_id: '',
+  brand_id: '',
   price: '',
   discount_price: '',
   stock: '',
@@ -29,6 +30,7 @@ const SORT_FIELDS = [
   { value: 'is_featured', label: 'Unggulan' },
   { value: 'created_at', label: 'Tanggal Dibuat' },
   { value: 'category_id', label: 'Kategori' },
+  { value: 'brand_id', label: 'Brand' },
 ];
 
 function Skeleton() {
@@ -59,6 +61,7 @@ export default function Products() {
   const { addToast } = useToast();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -68,10 +71,13 @@ export default function Products() {
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [hasImageChanges, setHasImageChanges] = useState(false);
 
   // Search & filter
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterBrand, setFilterBrand] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterStock, setFilterStock] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
@@ -95,6 +101,7 @@ export default function Products() {
     const params = { page, per_page: perPage, sort_field: sortField, sort_direction: sortDirection };
     if (search) params.search = search;
     if (filterCategory) params.category_id = filterCategory;
+    if (filterBrand) params.brand_id = filterBrand;
     if (filterStatus) params.is_active = filterStatus;
     if (filterStock) params.stock_status = filterStock;
 
@@ -105,18 +112,19 @@ export default function Products() {
       lastPage: data.meta?.last_page || data.last_page || 1,
       total: data.meta?.total || data.total || 0,
     });
-  }, [search, filterCategory, filterStatus, filterStock, perPage, sortField, sortDirection]);
+  }, [search, filterCategory, filterBrand, filterStatus, filterStock, perPage, sortField, sortDirection]);
 
   useEffect(() => {
     Promise.all([
       fetchProducts(1),
       getCategories().then(data => setCategories(data.data || data)),
+      getBrands().then(data => setBrands(data.data || data)),
     ]).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     if (!loading) fetchProducts(1);
-  }, [search, filterCategory, filterStatus, filterStock, perPage, sortField, sortDirection]);
+  }, [search, filterCategory, filterBrand, filterStatus, filterStock, perPage, sortField, sortDirection]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -169,6 +177,7 @@ export default function Products() {
     setFormErrors({});
     setSelectedImages([]);
     setImagePreviews([]);
+    setHasImageChanges(false);
     setModalOpen(true);
   };
 
@@ -178,6 +187,7 @@ export default function Products() {
       name: product.name || '',
       slug: product.slug || '',
       category_id: product.category_id || '',
+      brand_id: product.brand_id || '',
       price: product.price || '',
       discount_price: product.discount_price || '',
       stock: product.stock ?? '',
@@ -194,6 +204,7 @@ export default function Products() {
     setFormErrors({});
     setSelectedImages([]);
     setImagePreviews([]);
+    setHasImageChanges(false);
     setModalOpen(true);
   };
 
@@ -205,6 +216,7 @@ export default function Products() {
       const payload = {
         ...formData,
         category_id: Number(formData.category_id),
+        brand_id: formData.brand_id ? Number(formData.brand_id) : null,
         price: Number(formData.price),
         discount_price: formData.discount_price ? Number(formData.discount_price) : null,
         stock: Number(formData.stock),
@@ -212,27 +224,36 @@ export default function Products() {
         specifications: formData.specifications.length > 0 ? formData.specifications : null,
       };
 
+      let result;
+      let productId;
       if (editingProduct) {
-        const result = await updateProduct(editingProduct.id, payload);
+        result = await updateProduct(editingProduct.id, payload);
         setProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...result.data || result } : p));
+        productId = editingProduct.id;
         addToast('Produk berhasil diperbarui', 'success');
       } else {
-        const result = await createProduct(payload);
-        setProducts([result.data || result, ...products]);
+        result = await createProduct(payload);
+        const newProduct = result?.data || result;
+        productId = newProduct?.id;
+        setProducts(products.length > 0 ? [newProduct, ...products] : [newProduct]);
         addToast('Produk berhasil dibuat', 'success');
       }
 
-      setModalOpen(false);
-
-      // Upload images if any
-      if (selectedImages.length > 0) {
-        const productId = editingProduct ? editingProduct.id : (products[0]?.id || null);
-        if (!editingProduct) {
-          await fetchProducts(pagination.currentPage);
-        } else {
-          await uploadImages(productId);
-        }
+      let uploadedPaths = [];
+      if (selectedImages.length > 0 && productId) {
+        uploadedPaths = await uploadImages(productId);
       }
+
+      const currentImages = editingProduct ? (editingProduct.images || []) : [];
+      const finalImages = [...currentImages, ...uploadedPaths];
+
+      if (editingProduct && hasImageChanges) {
+        await reorderProductImages(editingProduct.id, finalImages);
+        addToast('Urutan gambar berhasil disimpan', 'success');
+      }
+
+      setModalOpen(false);
+      await fetchProducts(pagination.currentPage);
     } catch (err) {
       addToast('Gagal menyimpan: ' + (err.response?.data?.message || err.message), 'error');
     } finally {
@@ -241,18 +262,20 @@ export default function Products() {
   };
 
   const uploadImages = async (productId) => {
-    if (selectedImages.length === 0) return;
+    if (selectedImages.length === 0) return [];
     setUploadingImages(true);
     try {
       const formData = new FormData();
       selectedImages.forEach(file => formData.append('images[]', file));
-      await uploadProductImages(productId, formData);
+      const result = await uploadProductImages(productId, formData);
+      const uploadedPaths = result?.images?.map(img => img.startsWith('/') ? img : '/storage/' + img) || [];
       setSelectedImages([]);
       setImagePreviews([]);
-      await fetchProducts(pagination.currentPage);
-      addToast('Gambar berhasil diupload', 'success');
+      setHasImageChanges(false);
+      return uploadedPaths;
     } catch (err) {
       addToast('Gagal upload gambar: ' + (err.response?.data?.message || err.message), 'error');
+      return [];
     } finally {
       setUploadingImages(false);
     }
@@ -366,14 +389,46 @@ export default function Products() {
     });
   };
 
-  const handleDeleteProductImage = async (productId, imagePath) => {
-    try {
-      await deleteProductImage(productId, imagePath);
-      await fetchProducts(pagination.currentPage);
-      addToast('Gambar berhasil dihapus', 'success');
-    } catch (err) {
-      addToast('Gagal hapus gambar: ' + (err.response?.data?.message || err.message), 'error');
+  const handleLocalImageDelete = (imagePath) => {
+    setEditingProduct(prev => ({
+      ...prev,
+      images: (prev.images || []).filter(img => img !== imagePath),
+    }));
+    setHasImageChanges(true);
+  };
+
+  const handleDragStart = (index) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+  };
+
+  const handleDrop = (index) => {
+    if (draggedIndex === null || draggedIndex === index) {
+      setDraggedIndex(null);
+      return;
     }
+
+    const sourceImages = editingProduct ? editingProduct.images : imagePreviews;
+    const updated = [...sourceImages];
+    const [moved] = updated.splice(draggedIndex, 1);
+    updated.splice(index, 0, moved);
+
+    if (editingProduct) {
+      setEditingProduct(prev => ({ ...prev, images: updated }));
+      setHasImageChanges(true);
+    } else {
+      setImagePreviews(updated);
+    }
+
+    setDraggedIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
   };
 
   const addSpecification = () => {
@@ -453,6 +508,15 @@ export default function Products() {
               <option value="">Semua Kategori</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Brand</label>
+            <select value={filterBrand} onChange={e => setFilterBrand(e.target.value)} className="w-full border border-slate-300 rounded-xl px-3 py-2">
+              <option value="">Semua Brand</option>
+              {brands.map(brand => (
+                <option key={brand.id} value={brand.id}>{brand.name}</option>
               ))}
             </select>
           </div>
@@ -547,14 +611,19 @@ export default function Products() {
                     onClick={() => handleSort('name')}>
                   Nama <span className="text-slate-400 text-xs">{getSortIcon('name')}</span>
                 </th>
-                <th className="text-left px-4 py-3 text-sm font-semibold cursor-pointer hover:text-primary-600 select-none"
-                    onClick={() => handleSort('category_id')}>
-                  Kategori <span className="text-slate-400 text-xs">{getSortIcon('category_id')}</span>
-                </th>
-                <th className="text-left px-4 py-3 text-sm font-semibold cursor-pointer hover:text-primary-600 select-none"
-                    onClick={() => handleSort('price')}>
-                  Harga <span className="text-slate-400 text-xs">{getSortIcon('price')}</span>
-                </th>
+              <th className="text-left px-4 py-3 text-sm font-semibold cursor-pointer hover:text-primary-600 select-none"
+                  onClick={() => handleSort('category_id')}>
+                Kategori <span className="text-slate-400 text-xs">{getSortIcon('category_id')}</span>
+              </th>
+              <th className="text-left px-4 py-3 text-sm font-semibold cursor-pointer hover:text-primary-600 select-none"
+                  onClick={() => handleSort('brand_id')}>
+                Brand <span className="text-slate-400 text-xs">{getSortIcon('brand_id')}</span>
+              </th>
+              <th className="text-left px-4 py-3 text-sm font-semibold cursor-pointer hover:text-primary-600 select-none"
+                  onClick={() => handleSort('price')}>
+                Harga <span className="text-slate-400 text-xs">{getSortIcon('price')}</span>
+              </th>
+
                 <th className="text-left px-4 py-3 text-sm font-semibold">Diskon</th>
                 <th className="text-left px-4 py-3 text-sm font-semibold cursor-pointer hover:text-primary-600 select-none"
                     onClick={() => handleSort('stock')}>
@@ -574,7 +643,7 @@ export default function Products() {
             <tbody className="divide-y divide-slate-200">
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-slate-500">
                     Belum ada produk
                   </td>
                 </tr>
@@ -601,6 +670,7 @@ export default function Products() {
                       </div>
                     </td>
                     <td className="px-4 py-4 text-sm">{product.category?.name}</td>
+                    <td className="px-4 py-4 text-sm">{product.brand?.name || '-'}</td>
                     <td className="px-4 py-4 text-sm">Rp {Number(product.price).toLocaleString('id-ID')}</td>
                     <td className="px-4 py-4 text-sm">
                       {product.discount_price ? (
@@ -641,17 +711,17 @@ export default function Products() {
                           </svg>
                         </button>
                         <button onClick={() => openEditModal(product)} className="text-primary-600 flex items-center justify-center w-7 h-7 rounded-xl hover:bg-primary-50" title="Edit">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <line x1="13.5" y1="3.5" x2="17.5" y2="7.5" />
-                            <polyline points="13 7 9 11 8 14 11 13l4-4" />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="2" x2="22" y2="6" />
+                            <path d="M7.5 20.5L4 21l1.5-3.5L18 7l3.5 3.5L7.5 20.5z" />
                           </svg>
                         </button>
                         <button onClick={() => setDeleteConfirm({ open: true, id: product.id })} className="text-danger-600 flex items-center justify-center w-7 h-7 rounded-xl hover:bg-danger-50" title="Hapus">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18M9 6V3h6v3M4 10h16l-1 14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2L4 10z" />
-                            <line x1="10" y1="14" x2="14" y2="14" />
-                            <line x1="10" y1="18" x2="14" y2="18" />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
                           </svg>
                         </button>
                       </div>
@@ -733,6 +803,16 @@ export default function Products() {
                   {formErrors.category_id && <p className="text-danger-500 text-xs mt-1">{formErrors.category_id}</p>}
                 </div>
                 <div>
+                  <label className="block text-sm font-medium mb-1">Brand</label>
+                  <select value={formData.brand_id} onChange={e => setFormData({...formData, brand_id: e.target.value})}
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2">
+                    <option value="">Pilih Brand</option>
+                    {brands.map(brand => (
+                      <option key={brand.id} value={brand.id}>{brand.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium mb-1">SKU</label>
                   <input value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})}
                     className={`w-full border border-slate-300 rounded-xl px-3 py-2 ${formErrors.sku ? 'border-danger-500' : ''}`} placeholder="Kode unik produk" />
@@ -789,43 +869,50 @@ export default function Products() {
               <div>
                 <label className="block text-sm font-medium mb-2">Gambar Produk</label>
                 <div className="flex flex-wrap gap-3 mb-3">
-                  {editingProduct && editingProduct.images && editingProduct.images.map((img, i) => (
-                    <div key={i} className="relative group">
-                      <img src={img} alt="" className="w-20 h-20 object-cover rounded border" />
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteProductImage(editingProduct.id, img)}
-                        className="absolute -top-2 -right-2 bg-danger-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                  {imagePreviews.map((preview, i) => (
-                      <div key={`new-${i}`} className="relative">
-                        <img src={preview} alt="" className="w-20 h-20 object-cover rounded border" />
-                        <button
-                          type="button"
-                          onClick={() => removeSelectedImage(i)}
-                          className="absolute -top-2 -right-2 bg-danger-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                  {(() => {
+                    const existingImages = editingProduct ? editingProduct.images : [];
+                    const newImages = imagePreviews;
+                    const allImages = [...existingImages, ...newImages];
+
+                    if (allImages.length === 0) {
+                      return <p className="text-sm text-slate-400">Belum ada gambar</p>;
+                    }
+
+                    return allImages.map((img, i) => {
+                      const isNewImage = i >= existingImages.length;
+                      const newImageIndex = i - existingImages.length;
+                      return (
+                        <div
+                          key={isNewImage ? `new-${newImageIndex}` : `existing-${i}`}
+                          draggable
+                          onDragStart={() => handleDragStart(i)}
+                          onDragOver={(e) => handleDragOver(e, i)}
+                          onDrop={() => handleDrop(i)}
+                          onDragEnd={handleDragEnd}
+                          className={`relative group cursor-move ${draggedIndex === i ? 'opacity-50' : ''}`}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </button>
-                      </div>
-                  ))}
+                          <img src={img} alt="" className="w-20 h-20 object-cover rounded border" />
+                          <button
+                            type="button"
+                            onClick={() => isNewImage ? removeSelectedImage(newImageIndex) : handleLocalImageDelete(img)}
+                            className="absolute -top-2 -right-2 bg-danger-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    });
+                  })()}
                    <label className="w-20 h-20 border-2 border-dashed border-slate-300 rounded flex items-center justify-center cursor-pointer hover:border-primary-500">
                     <span className="text-2xl text-slate-400">+</span>
                     <input type="file" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" multiple onChange={handleImageSelect} className="hidden" />
                   </label>
                 </div>
                 {uploadingImages && <p className="text-sm text-primary-600">Mengupload gambar...</p>}
-                <p className="text-xs text-slate-400 mt-1">Format yang didukung: <strong>JPG, PNG, GIF, WebP</strong>. AVIF tidak didukung.</p>
+                <p className="text-xs text-slate-400 mt-1">Format yang didukung: <strong>JPG, PNG, GIF, WebP</strong>. AVIF tidak didukung. Geser gambar untuk mengatur urutan tampil.</p>
               </div>
 
               {/* Specifications */}

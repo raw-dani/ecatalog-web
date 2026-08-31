@@ -14,17 +14,17 @@ class SettingController extends Controller
 
         $logo = $settings['store_logo'] ?? null;
         if ($logo) {
-            $logo = asset('storage/' . $logo);
+            $logo = '/storage/' . $logo;
         }
 
         $heroBackground = $settings['store_hero_background'] ?? null;
         if ($heroBackground) {
-            $heroBackground = asset('storage/' . $heroBackground);
+            $heroBackground = '/storage/' . $heroBackground;
         }
 
         $favicon = $settings['store_favicon'] ?? null;
         if ($favicon) {
-            $favicon = asset('storage/' . $favicon);
+            $favicon = '/storage/' . $favicon;
         }
 
         return response()->json([

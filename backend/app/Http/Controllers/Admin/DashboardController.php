@@ -44,7 +44,7 @@ class DashboardController extends Controller
                     'id' => $item->id,
                     'name' => $item->name,
                     'price' => $item->price,
-                    'image' => !empty($images) ? (str_starts_with($images[0], 'http') ? $images[0] : asset('storage/' . $images[0])) : null,
+                    'image' => !empty($images) ? (str_starts_with($images[0], 'http') ? $images[0] : '/storage/' . $images[0]) : null,
                     'total_qty' => (int) $item->total_qty,
                     'total_revenue' => (float) $item->total_revenue,
                 ];

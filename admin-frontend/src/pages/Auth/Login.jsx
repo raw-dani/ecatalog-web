@@ -47,12 +47,25 @@ export default function Login() {
         localStorage.removeItem('remembered_email');
       }
 
+      // Check license status after login
+      try {
+        const licenseRes = await api.get('/license/status');
+        const licenseData = licenseRes.data || licenseRes;
+        if (licenseData.status === 'invalid') {
+          navigate('/settings');
+          return;
+        }
+      } catch {
+        // ignore license check error, proceed to dashboard
+      }
+
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Email atau password salah');
     } finally {
       setLoading(false);
     }
+
   };
 
   return (

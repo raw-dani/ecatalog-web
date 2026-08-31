@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Offline - E-Catalog</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+        color: #111827;
+        padding: 24px;
+      }
+      .card {
+        text-align: center;
+        max-width: 420px;
+      }
+      .icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        background: #eff6ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 34px;
+      }
+      h1 { font-size: 1.4rem; margin-bottom: 10px; }
+      p { color: #6b7280; line-height: 1.6; margin-bottom: 24px; }
+      button {
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:hover { background: #1d4ed8; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon">📡</div>
+      <h1>Anda sedang offline</h1>
+      <p>
+        Koneksi internet tidak tersedia dan halaman ini belum pernah dibuka
+        sebelumnya. Silakan periksa koneksi Anda, lalu coba lagi. Halaman yang
+        sudah pernah dikunjungi tetap dapat diakses secara offline.
+      </p>
+      <button onclick="window.location.reload()">Coba Lagi</button>
+    </div>
+    <script>
+      window.addEventListener('online', () => window.location.reload());
+    </script>
+  </body>
+</html>

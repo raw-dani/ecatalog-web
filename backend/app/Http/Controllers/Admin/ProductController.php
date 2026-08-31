@@ -7,6 +7,7 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\StoreSubscriber;
+use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NewProductNotificationMail;
@@ -16,7 +17,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query()->with('category');
+        $query = Product::query()->with(['category', 'brand']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -28,6 +29,10 @@ class ProductController extends Controller
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
         }
 
         if ($request->filled('is_active')) {
@@ -51,11 +56,15 @@ class ProductController extends Controller
         // Sorting
         $sortField = $request->sort_field ?? 'created_at';
         $sortDirection = $request->sort_direction ?? 'desc';
-        $allowedSortFields = ['name', 'price', 'stock', 'is_active', 'is_featured', 'created_at', 'category_id'];
+        $allowedSortFields = ['name', 'price', 'stock', 'is_active', 'is_featured', 'created_at', 'category_id', 'brand_id'];
         if (in_array($sortField, $allowedSortFields)) {
             if ($sortField === 'category_id') {
                 $query->join('categories', 'products.category_id', '=', 'categories.id')
                       ->orderBy('categories.name', $sortDirection === 'asc' ? 'asc' : 'desc')
+                      ->select('products.*');
+            } elseif ($sortField === 'brand_id') {
+                $query->join('brands', 'products.brand_id', '=', 'brands.id')
+                      ->orderBy('brands.name', $sortDirection === 'asc' ? 'asc' : 'desc')
                       ->select('products.*');
             } else {
                 $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
@@ -74,6 +83,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:products,slug',
             'description' => 'nullable|string',
@@ -117,6 +127,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:products,slug,' . $product->id,
             'description' => 'nullable|string',
@@ -176,7 +187,7 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Gambar berhasil diupload',
-            'images' => collect($uploaded)->map(fn($p) => asset('storage/' . $p)),
+            'images' => collect($uploaded)->map(fn($p) => '/storage/' . $p),
         ]);
     }
 
@@ -189,12 +200,36 @@ class ProductController extends Controller
         $image = $request->image;
         $images = $product->images ?? [];
 
-        $images = array_filter($images, fn($i) => $i !== $image);
+        $relativeImage = ltrim($image, '/');
+        if (str_starts_with($relativeImage, 'storage/')) {
+            $relativeImage = substr($relativeImage, strlen('storage/'));
+        }
+
+        $images = array_filter($images, fn($i) => $i !== $relativeImage);
         $product->update(['images' => array_values($images)]);
 
-        Storage::disk('public')->delete($image);
+        Storage::disk('public')->delete($relativeImage);
 
         return response()->json(['message' => 'Gambar berhasil dihapus']);
+    }
+
+    public function reorderImages(Request $request, Product $product)
+    {
+        $request->validate([
+            'images' => 'required|array',
+        ]);
+
+        $normalized = collect($request->images)->map(function ($img) {
+            $relative = ltrim($img, '/');
+            if (str_starts_with($relative, 'storage/')) {
+                $relative = substr($relative, strlen('storage/'));
+            }
+            return $relative;
+        })->filter()->values()->all();
+
+        $product->update(['images' => $normalized]);
+
+        return response()->json(['message' => 'Urutan gambar berhasil disimpan']);
     }
 
     /**

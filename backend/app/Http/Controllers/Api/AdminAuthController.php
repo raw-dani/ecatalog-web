@@ -56,7 +56,7 @@ class AdminAuthController extends Controller
                 'name' => $admin->name,
                 'email' => $admin->email,
                 'role' => $admin->role,
-                'avatar' => $admin->avatar ? asset('storage/' . $admin->avatar) : null,
+                'avatar' => $admin->avatar ? '/storage/' . $admin->avatar : null,
                 'roles' => $admin->roles->pluck('name'),
             ],
         ]);
@@ -207,7 +207,7 @@ class AdminAuthController extends Controller
                 'name' => $admin->name,
                 'email' => $admin->email,
                 'role' => $admin->role,
-                'avatar' => $admin->avatar ? asset('storage/' . $admin->avatar) : null,
+                'avatar' => $admin->avatar ? '/storage/' . $admin->avatar : null,
                 'roles' => $admin->roles->pluck('name'),
             ],
         ]);

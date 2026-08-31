@@ -394,6 +394,7 @@ export default function Settings() {
       await activateLicense({});
       const status = await getLicenseStatus();
       setLicenseStatus(status);
+      localStorage.setItem('ecatalog_admin_license_status', JSON.stringify({ status: 'valid', message: '', expiresAt: Date.now() + 60000 }));
       addToast('License berhasil diaktifkan', 'success');
     } catch (err) {
       const message = err.response?.data?.message || err.message || 'Gagal mengaktifkan license';
@@ -420,6 +421,7 @@ export default function Settings() {
       await deactivateLicense({});
       const status = await getLicenseStatus();
       setLicenseStatus(status);
+      localStorage.setItem('ecatalog_admin_license_status', JSON.stringify({ status: 'invalid', message: status.message || 'Lisensi tidak valid atau telah di-suspend.', expiresAt: Date.now() + 60000 }));
       addToast('License berhasil dinonaktifkan', 'success');
     } catch (err) {
       const message = err.response?.data?.message || err.message || 'Gagal menonaktifkan license';

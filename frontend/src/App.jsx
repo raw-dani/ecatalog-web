@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { getSettings } from './services/cartService';
 import LicenseLocked from './components/License/LicenseLocked';
+import OfflineBanner from './components/Offline/OfflineBanner';
 import { onLicenseLocked } from './utils/licenseLock';
 import api from './services/api';
 import Layout from './components/Layout/Layout';
@@ -205,6 +206,7 @@ function LicenseChecker() {
 export default function App() {
   return (
     <CartProvider>
+      <OfflineBanner />
       <Router>
         <FaviconUpdater />
         <LicenseChecker />
