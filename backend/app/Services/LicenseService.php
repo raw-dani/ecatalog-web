@@ -45,6 +45,18 @@ class LicenseService
         $domain = $domain ?? $this->getDomain();
         $username = $username ?? $this->getUsername();
 
+        $statusCacheKey = 'license_status_' . md5($this->licenseKey);
+        $cachedStatus = Cache::get($statusCacheKey);
+        if (is_array($cachedStatus) && ($cachedStatus['status'] ?? null) === 'suspended') {
+            return [
+                'status' => 'error',
+                'code' => 403,
+                'message' => 'License is suspended',
+                'data' => $cachedStatus,
+                'suspended_via_webhook' => true,
+            ];
+        }
+
         $cacheKey = 'license_verify_' . md5($fingerprint);
         $cached = Cache::get($cacheKey);
 
@@ -261,5 +273,39 @@ class LicenseService
         Cache::forget('license_token');
         $fingerprint = $this->generateFingerprint();
         Cache::forget('license_verify_' . md5($fingerprint));
+        Cache::forget('license_status_' . md5($this->licenseKey));
+    }
+
+    public function applySuspended(string $licenseKey, ?string $suspendedAt = null): void
+    {
+        $payload = [
+            'status' => 'suspended',
+            'suspended_at' => $suspendedAt ?? now()->toDateTimeString(),
+            'source' => 'webhook',
+        ];
+
+        Cache::put('license_status_' . md5($licenseKey), $payload, now()->addDays(7));
+
+        $fingerprint = $this->generateFingerprint();
+        Cache::forget('license_verify_' . md5($fingerprint));
+        Cache::forget('license_token');
+
+        $blockedResponse = [
+            'status' => 'error',
+            'code' => 403,
+            'message' => 'License is suspended',
+            'data' => $payload,
+            'suspended_via_webhook' => true,
+        ];
+        Cache::put('license_verify_' . md5($fingerprint), $blockedResponse, now()->addDays(7));
+    }
+
+    public function applyReactivated(string $licenseKey): void
+    {
+        Cache::forget('license_status_' . md5($licenseKey));
+
+        $fingerprint = $this->generateFingerprint();
+        Cache::forget('license_verify_' . md5($fingerprint));
+        Cache::forget('license_token');
     }
 }

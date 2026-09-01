@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\LicenseController;
+use App\Http\Controllers\Api\License\LicenseCallbackController;
 use App\Http\Controllers\Api\StoreSubscriberController;
 use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -56,6 +57,7 @@ Route::post('/admin/reset-password', [AdminAuthController::class, 'resetPassword
 Route::post('/license/verify', [LicenseController::class, 'verify']);
 Route::post('/license/activate', [LicenseController::class, 'activate']);
 Route::get('/license/status', [LicenseController::class, 'status']);
+Route::post('/license/callback', [LicenseCallbackController::class, 'handle']);
 
 Route::middleware('auth:admin-api')->group(function () {
     Route::get('/admin/me', [AdminAuthController::class, 'me']);
