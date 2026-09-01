@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { getDashboardStats } from '../../services/adminService';
+import { getDashboardStats, getTrafficStats } from '../../services/adminService';
 import { useNavigate } from 'react-router-dom';
 
 const statusConfig = {
@@ -10,6 +10,10 @@ const statusConfig = {
   completed: { label: 'Selesai', color: 'bg-success-100 text-success-700' },
   cancelled: { label: 'Dibatalkan', color: 'bg-danger-100 text-danger-700' },
 };
+
+// Sembunyikan seluruh informasi pesanan/order untuk saat ini.
+// Ubah menjadi true untuk menampilkan kembali.
+const SHOW_ORDERS = false;
 
 function Skeleton() {
   return (
@@ -46,6 +50,35 @@ function getTrendIcon(current, previous) {
   return { icon: 'trend-horizontal', color: 'text-slate-400' };
 }
 
+function TrafficBarChart({ data }) {
+  const max = Math.max(1, ...data.map(d => d.visits));
+  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+  return (
+    <div className="flex items-end gap-1.5 h-32 mt-4">
+      {data.map((d) => {
+        const height = Math.round((d.visits / max) * 100);
+        const date = new Date(d.date + 'T00:00:00');
+        const label = `${date.getDate()} ${days[date.getDay()]}`;
+        return (
+          <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative">
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+              {d.visits} kunjungan ({d.unique_visits} unik)
+            </div>
+            <div className="w-full flex items-end h-full">
+              <div
+                className="w-full bg-primary-500 group-hover:bg-primary-600 rounded-t transition-all"
+                style={{ height: `${Math.max(height, d.visits > 0 ? 4 : 1)}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-400 whitespace-nowrap">{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const TrendIcon = ({ type, colorClass }) => {
   if (type === 'trend-up') {
     return (
@@ -71,6 +104,7 @@ const TrendIcon = ({ type, colorClass }) => {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
+  const [traffic, setTraffic] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -81,6 +115,8 @@ export default function Dashboard() {
     try {
       const data = await getDashboardStats();
       setStats(data);
+      const trafficData = await getTrafficStats();
+      setTraffic(trafficData);
     } catch (err) {
       console.error('Failed to load dashboard stats:', err);
     } finally {
@@ -113,6 +149,7 @@ export default function Dashboard() {
       ['Total Produk', stats.total_products],
       ['Produk Aktif', stats.active_products],
       ['Total Kategori', stats.total_categories],
+      ...(SHOW_ORDERS ? [
       ['Total Pesanan', stats.total_orders],
       ['Pesanan Pending', stats.pending_orders],
       ['Total Pendapatan', formatCurrency(stats.total_revenue)],
@@ -120,12 +157,13 @@ export default function Dashboard() {
       ['Pendapatan Hari Ini', formatCurrency(stats.today_revenue)],
       ['Pesanan Kemarin', stats.yesterday_orders],
       ['Pendapatan Kemarin', formatCurrency(stats.yesterday_revenue)],
+      ] : []),
       ['Total Rekening Bank', stats.total_bank_accounts],
       ['', ''],
       ['Status Pesanan', 'Jumlah'],
     ];
 
-    if (stats.order_counts) {
+    if (SHOW_ORDERS && stats.order_counts) {
       Object.entries(statusConfig).forEach(([status, config]) => {
         const count = stats.order_counts[status + '_orders'] || 0;
         rows.push([config.label, count]);
@@ -174,7 +212,7 @@ export default function Dashboard() {
         </svg>
       )
     },
-    {
+    ...(SHOW_ORDERS ? [{
       label: 'Total Pesanan', value: stats?.total_orders,       color: 'bg-slate-50 border border-slate-200 text-slate-900',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -203,7 +241,7 @@ export default function Dashboard() {
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
         </svg>
       )
-    },
+    }] : []),
   ];
 
   const orderCounts = stats?.order_counts || {};
@@ -212,8 +250,9 @@ export default function Dashboard() {
 
   const quickActions = [
     { label: 'Tambah Produk', icon: (<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /><line x1="12" y1="12" x2="12" y2="2" /></svg>), onClick: () => navigate('/products'), color: 'bg-primary-50 hover:bg-primary-100 text-primary-600' },
-    { label: 'Lihat Pesanan', icon: (<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>), onClick: () => navigate('/orders'), color: 'bg-slate-50 hover:bg-slate-100 text-slate-600' },
+    ...(SHOW_ORDERS ? [{ label: 'Lihat Pesanan', icon: (<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>), onClick: () => navigate('/orders'), color: 'bg-slate-50 hover:bg-slate-100 text-slate-600' }] : []),
     { label: 'Kelola Kategori', icon: (<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /><path d="M9 12l2 2 4-4" /></svg>), onClick: () => navigate('/categories'), color: 'bg-warning-50 hover:bg-warning-100 text-warning-600' },
+    { label: 'Kelola Brand', icon: (<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>), onClick: () => navigate('/brands'), color: 'bg-info-50 hover:bg-info-100 text-info-600' },
     { label: 'Rekening Bank', icon: (<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 21 21 21 21 18 3 18 3 21" /><line x1="3" y1="10" x2="21" y2="10" /><polyline points="5 6 12 2 19 6" /><line x1="4" y1="10" x2="4" y2="18" /><line x1="20" y1="10" x2="20" y2="18" /></svg>), onClick: () => navigate('/bank-accounts'), color: 'bg-success-50 hover:bg-success-100 text-success-600' },
   ];
 
@@ -259,6 +298,7 @@ export default function Dashboard() {
       </div>
 
       {/* Today's Stats */}
+      {SHOW_ORDERS && (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-5 rounded-xl shadow">
           <div className="flex items-center justify-between">
@@ -289,6 +329,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -302,6 +343,86 @@ export default function Dashboard() {
             {action.label}
           </button>
         ))}
+      </div>
+
+      {/* Traffic Website */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-xl shadow border border-slate-100 lg:col-span-2">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-primary-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3v18h18" />
+                <path d="M18 9l-5 5-3-3-4 4" />
+              </svg>
+              Traffic Website (14 Hari)
+            </h2>
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span className="flex items-center gap-1"><span className="w-3 h-3 bg-primary-500 rounded-sm inline-block" /> Kunjungan</span>
+            </div>
+          </div>
+          <TrafficBarChart data={traffic?.daily || []} />
+          <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-slate-100">
+            <div>
+              <p className="text-xs text-slate-500">Hari Ini</p>
+              <p className="text-xl font-bold text-slate-800">{traffic?.today_visits || 0}</p>
+              <p className="text-xs text-slate-400">Kemarin: {traffic?.yesterday_visits || 0}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Pengunjung Unik Hari Ini</p>
+              <p className="text-xl font-bold text-slate-800">{traffic?.today_unique_visitors || 0}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Total Kunjungan</p>
+              <p className="text-xl font-bold text-slate-800">{traffic?.total_visits || 0}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow border border-slate-100">
+          <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-warning-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            Halaman Terpopuler
+          </h2>
+          {traffic?.top_pages?.length > 0 ? (
+            <div className="space-y-3">
+              {traffic.top_pages.map((page, index) => {
+                const maxVisits = traffic.top_pages[0].visits || 1;
+                return (
+                  <div key={index}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium text-slate-700 truncate max-w-[70%]" title={page.path}>{page.path}</span>
+                      <span className="text-slate-500 flex-shrink-0">{page.visits}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-primary-500" style={{ width: `${Math.round((page.visits / maxVisits) * 100)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {traffic?.top_referrers?.length > 0 && (
+                <div className="pt-3 mt-3 border-t border-slate-100">
+                  <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Sumber Trafik</p>
+                  {traffic.top_referrers.map((ref, index) => {
+                    let host = ref.referrer;
+                    try { host = new URL(ref.referrer).hostname; } catch { /* biarkan */ }
+                    return (
+                      <div key={index} className="flex justify-between text-sm py-1">
+                        <span className="text-slate-600 truncate max-w-[70%]" title={ref.referrer}>{host}</span>
+                        <span className="text-slate-500">{ref.visits}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">Belum ada data kunjungan.</p>
+          )}
+        </div>
       </div>
 
       {/* Main Stats Cards */}

@@ -40,6 +40,7 @@ class SettingController extends Controller
             'google_analytics' => '',
             'google_merchant' => '',
             'google_tag_manager' => '',
+            'show_stock' => '1',
         ];
     }
 

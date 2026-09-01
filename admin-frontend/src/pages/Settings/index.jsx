@@ -12,11 +12,12 @@ const resolveStorageUrl = (path) => {
 };
 
 const SETTING_FIELDS = {
-  general: [
-    { key: 'store_name', label: 'Nama Toko', type: 'text', required: true, validation: (v) => v.trim() ? '' : 'Nama toko wajib diisi' },
-    { key: 'store_description', label: 'Deskripsi', type: 'textarea', required: false },
-    { key: 'store_address', label: 'Alamat', type: 'textarea', required: false },
-  ],
+   general: [
+     { key: 'store_name', label: 'Nama Toko', type: 'text', required: true, validation: (v) => v.trim() ? '' : 'Nama toko wajib diisi' },
+     { key: 'store_description', label: 'Deskripsi', type: 'textarea', required: false },
+     { key: 'store_address', label: 'Alamat', type: 'textarea', required: false },
+     { key: 'show_stock', label: 'Tampilkan Stok di Frontend', type: 'toggle', required: false, hint: 'Aktifkan untuk menampilkan jumlah stok produk di halaman toko' },
+   ],
   contact: [
     { key: 'store_phone', label: 'No. Telepon', type: 'text', required: false, placeholder: '081234567890', validation: (v) => v && !/^[0-9+\-\s()]*$/.test(v) ? 'Format nomor telepon tidak valid' : '' },
     { key: 'store_whatsapp', label: 'No. WhatsApp (dengan kode negara)', type: 'text', required: true, placeholder: '6281234567890', validation: (v) => v && !/^[0-9]+$/.test(v) ? 'Nomor WA hanya boleh angka' : '' },
@@ -481,7 +482,18 @@ export default function Settings() {
               }}
             />
           </div>
-        ) : field.type === 'textarea' ? (
+         ) : field.type === 'toggle' ? (
+           <div className="flex items-center gap-3 mt-1">
+             <button
+               type="button"
+               onClick={() => handleChange(field.key, settings[field.key] === '1' ? '0' : '1')}
+               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings[field.key] === '1' ? 'bg-primary-600' : 'bg-slate-300'}`}
+             >
+               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings[field.key] === '1' ? 'translate-x-6' : 'translate-x-1'}`} />
+             </button>
+             <span className="text-sm text-slate-600">{field.hint || (settings[field.key] === '1' ? 'Aktif' : 'Nonaktif')}</span>
+           </div>
+         ) : field.type === 'textarea' ? (
           <textarea
             value={settings[field.key] || ''}
             onChange={e => handleChange(field.key, e.target.value)}

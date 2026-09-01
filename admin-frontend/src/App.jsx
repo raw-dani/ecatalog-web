@@ -12,7 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Categories from './pages/Categories';
 import Brands from './pages/Brands';
-import Orders from './pages/Orders';
+// import Orders from './pages/Orders'; // Sementara disembunyikan: fitur pesanan/order
 import Settings from './pages/Settings';
 import BankAccounts from './pages/BankAccounts';
 import Users from './pages/Users';
@@ -248,7 +248,8 @@ function App() {
             <Route path="products" element={<Products />} />
             <Route path="categories" element={<Categories />} />
             <Route path="brands" element={<Brands />} />
-            <Route path="orders" element={<Orders />} />
+            {/* Sementara disembunyikan: fitur pesanan/order. Aktifkan kembali bila diperlukan. */}
+            <Route path="orders" element={<Navigate to="/" replace />} />
             <Route path="settings" element={<Settings />} />
             <Route path="bank-accounts" element={<BankAccounts />} />
             <Route path="users" element={<Users />} />

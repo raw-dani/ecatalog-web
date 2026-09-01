@@ -10,6 +10,8 @@ export const resetPassword = (data) => api.post('/admin/reset-password', data).t
 
 export const getDashboardStats = () => api.get('/admin/dashboard').then(res => res.data);
 
+export const getTrafficStats = () => api.get('/admin/traffic').then(res => res.data);
+
 export const getProducts = (params) => api.get('/admin/products', { params }).then(res => res.data);
 export const getProduct = (id) => api.get(`/admin/products/${id}`).then(res => res.data);
 export const createProduct = (data) => api.post('/admin/products', data).then(res => res.data);

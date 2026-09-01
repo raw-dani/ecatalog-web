@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function ProductCard({ product }) {
+  const { showStock } = useSettings();
   const image = product.images && product.images.length > 0 ? product.images[0] : '/placeholder.jpg';
   const finalPrice = product.discount_price ?? product.price;
 
@@ -32,11 +34,11 @@ export default function ProductCard({ product }) {
             )}
             <span className="text-lg font-bold text-danger-600">{formatCurrency(finalPrice)}</span>
           </div>
-          {product.stock > 0 && (
-            <span className="inline-block mt-2 text-xs bg-success-100 text-success-700 px-2 py-1 rounded">
-              Stok: {product.stock}
-            </span>
-          )}
+           {showStock && product.stock > 0 && (
+             <span className="inline-block mt-2 text-xs bg-success-100 text-success-700 px-2 py-1 rounded">
+               Stok: {product.stock}
+             </span>
+           )}
         </div>
       </div>
     </Link>

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\LicenseController;
 use App\Http\Controllers\Api\StoreSubscriberController;
+use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -32,6 +33,8 @@ Route::middleware(['check.license', 'cache.headers'])->group(function () {
     Route::get('/products/featured', [ProductController::class, 'featured']);
     Route::get('/products/{slug}/related', [ProductController::class, 'related']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
+
+    Route::post('/track-visit', [SiteVisitController::class, 'track']);
 
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart/items', [CartController::class, 'store']);
@@ -65,6 +68,7 @@ Route::middleware('auth:admin-api')->group(function () {
     // Dashboard — super_admin, admin, manager, demo
     Route::middleware('role:super_admin,admin,manager,demo')->group(function () {
         Route::get('/admin/dashboard', [DashboardController::class, 'stats']);
+        Route::get('/admin/traffic', [SiteVisitController::class, 'stats']);
     });
 
     // Categories — super_admin, admin, manager, demo

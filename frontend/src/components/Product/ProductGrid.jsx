@@ -1,6 +1,8 @@
 import ProductCard from './ProductCard';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function ProductGrid({ products, loading, viewMode = 'grid' }) {
+  const { showStock } = useSettings();
   if (loading) {
     return (
       <div className={viewMode === 'grid' 
@@ -52,11 +54,11 @@ export default function ProductGrid({ products, loading, viewMode = 'grid' }) {
                   {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(product.discount_price ?? product.price)}
                 </span>
               </div>
-              {product.stock > 0 ? (
-                <span className="text-xs bg-success-100 text-success-700 px-2 py-1 rounded">Stok: {product.stock}</span>
-              ) : (
-                <span className="text-xs bg-danger-100 text-danger-700 px-2 py-1 rounded">Habis</span>
-              )}
+               {showStock && product.stock > 0 ? (
+                 <span className="text-xs bg-success-100 text-success-700 px-2 py-1 rounded">Stok: {product.stock}</span>
+               ) : (
+                 <span className="text-xs bg-danger-100 text-danger-700 px-2 py-1 rounded">Habis</span>
+               )}
             </div>
           </div>
         ))}

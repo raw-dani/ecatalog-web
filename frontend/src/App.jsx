@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { getSettings } from './services/cartService';
 import LicenseLocked from './components/License/LicenseLocked';
 import OfflineBanner from './components/Offline/OfflineBanner';
+import VisitTracker from './components/VisitTracker';
 import { onLicenseLocked } from './utils/licenseLock';
 import api from './services/api';
 import Layout from './components/Layout/Layout';
@@ -205,26 +207,29 @@ function LicenseChecker() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <OfflineBanner />
-      <Router>
-        <FaviconUpdater />
-        <LicenseChecker />
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="produk" element={<Products />} />
-            <Route path="produk/:slug" element={<ProductDetail />} />
-            <Route path="kategori" element={<Categories />} />
-            <Route path="kategori/:slug" element={<Products />} />
-            <Route path="keranjang" element={<Cart />} />
-            <Route path="cara-pemesanan" element={<HowToOrder />} />
-            <Route path="kontak" element={<Contact />} />
-            <Route path="bantuan" element={<Help />} />
-            <Route path="pesanan/:orderNumber" element={<OrderTracking />} />
-          </Route>
-        </Routes>
-      </Router>
-    </CartProvider>
+    <SettingsProvider>
+      <CartProvider>
+        <OfflineBanner />
+        <Router>
+          <VisitTracker />
+          <FaviconUpdater />
+          <LicenseChecker />
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="produk" element={<Products />} />
+              <Route path="produk/:slug" element={<ProductDetail />} />
+              <Route path="kategori" element={<Categories />} />
+              <Route path="kategori/:slug" element={<Products />} />
+              <Route path="keranjang" element={<Cart />} />
+              <Route path="cara-pemesanan" element={<HowToOrder />} />
+              <Route path="kontak" element={<Contact />} />
+              <Route path="bantuan" element={<Help />} />
+              <Route path="pesanan/:orderNumber" element={<OrderTracking />} />
+            </Route>
+          </Routes>
+        </Router>
+      </CartProvider>
+    </SettingsProvider>
   );
 }
