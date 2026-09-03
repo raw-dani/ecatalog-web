@@ -88,3 +88,5 @@ export const getLicenseStatus = () => api.get('/license/status').then(res => res
 export const verifyLicense = (data) => api.post('/license/verify', data).then(res => res.data);
 export const activateLicense = (data) => api.post('/license/activate', data).then(res => res.data);
 export const deactivateLicense = (data) => api.post('/license/deactivate', data).then(res => res.data);
+export const getLicenseBinding = () => api.get('/license/binding').then(res => res.data);
+export const bindLicense = (data) => api.post('/license/bind', data).then(res => res.data);

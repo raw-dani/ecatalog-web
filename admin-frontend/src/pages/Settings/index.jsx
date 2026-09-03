@@ -2,6 +2,7 @@
 import { getSettings, updateSettings, uploadLogo, uploadFavicon, resetSettingsDefaults, activateLicense, deactivateLicense, getLicenseStatus } from '../../services/adminService';
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
+import LicenseBindingCard from '../../components/LicenseBindingCard';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
@@ -767,6 +768,9 @@ className="bg-success-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-succe
           </div>
         </div>
       )}
+
+      {/* License Binding Card */}
+      <LicenseBindingCard />
 
       {/* Settings Tabs */}
         <div className="bg-white p-6 rounded-xl shadow mb-6">
