@@ -57,6 +57,8 @@ Route::post('/admin/reset-password', [AdminAuthController::class, 'resetPassword
 Route::post('/license/verify', [LicenseController::class, 'verify']);
 Route::post('/license/activate', [LicenseController::class, 'activate']);
 Route::get('/license/status', [LicenseController::class, 'status']);
+Route::get('/license/binding', [LicenseController::class, 'bindingInfo']);
+Route::post('/license/bind', [LicenseController::class, 'bind']);
 Route::post('/license/callback', [LicenseCallbackController::class, 'handle']);
 
 Route::middleware('auth:admin-api')->group(function () {

@@ -69,6 +69,24 @@ class LicenseCallbackController extends Controller
                 Log::info('License reactivated via webhook', ['license_key' => $licenseKey]);
                 break;
 
+            case 'license.bound':
+                $installId = $payload['install_id'] ?? null;
+                $this->licenseService->applyRebound($licenseKey, $installId, $payload['reason'] ?? 'server_rebound');
+                Log::info('License rebound via webhook', [
+                    'license_key' => $licenseKey,
+                    'install_id' => $installId,
+                ]);
+                break;
+
+            case 'license.unbound':
+                $installId = $payload['install_id'] ?? null;
+                $this->licenseService->applyReactivated($licenseKey);
+                Log::info('License unbound via webhook', [
+                    'license_key' => $licenseKey,
+                    'install_id' => $installId,
+                ]);
+                break;
+
             default:
                 return response()->json([
                     'status' => 'error',

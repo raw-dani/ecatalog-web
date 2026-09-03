@@ -12,13 +12,15 @@ class LicenseService
     private string $apiKey;
     private string $licenseKey;
     private string $platform;
+    private LicenseBindingService $binding;
 
-    public function __construct()
+    public function __construct(LicenseBindingService $binding)
     {
         $this->serverUrl = rtrim(config('license.server_url'), '/');
         $this->apiKey = config('license.api_key');
         $this->licenseKey = config('license.license_key');
         $this->platform = config('license.platform', 'hosting');
+        $this->binding = $binding;
     }
 
     public function getDomain(): string
@@ -41,9 +43,28 @@ class LicenseService
             ];
         }
 
-        $fingerprint = $fingerprint ?? $this->generateFingerprint($domain, $username);
+        $fingerprint = $fingerprint ?? $this->binding->getMachineFingerprint();
         $domain = $domain ?? $this->getDomain();
         $username = $username ?? $this->getUsername();
+
+        if (!$this->binding->isBoundToCurrentMachine()) {
+            $cached = $this->getCachedBlockedResponse();
+            if ($cached) {
+                return $cached;
+            }
+
+            $result = $this->doVerify($fingerprint, $domain, $username);
+
+            if (($result['status'] ?? '') === 'success') {
+                if (!empty($result['data']['bound']) && empty($result['data']['install_id'])) {
+                    return $this->blockNotBound($result);
+                }
+            } else {
+                $this->rememberBlockedResponse($result);
+            }
+
+            return $result;
+        }
 
         $statusCacheKey = 'license_status_' . md5($this->licenseKey);
         $cachedStatus = Cache::get($statusCacheKey);
@@ -60,7 +81,8 @@ class LicenseService
         $cacheKey = 'license_verify_' . md5($fingerprint);
         $cached = Cache::get($cacheKey);
 
-        if ($cached && is_array($cached)) {
+        if ($cached && is_array($cached) && ($cached['status'] ?? '') === 'success') {
+            $this->binding->touch();
             return $cached;
         }
 
@@ -69,19 +91,28 @@ class LicenseService
         if ($lock->get()) {
             try {
                 $cached = Cache::get($cacheKey);
-                if ($cached && is_array($cached)) {
+                if ($cached && is_array($cached) && ($cached['status'] ?? '') === 'success') {
                     return $cached;
                 }
 
                 $result = $this->doVerify($fingerprint, $domain, $username);
 
                 if (($result['status'] ?? '') === 'success') {
+                    if (!empty($result['data']['install_id'])) {
+                        $serverInstallId = $result['data']['install_id'];
+                        if ($serverInstallId !== $this->binding->getInstallId()) {
+                            return $this->blockInstallMismatch($result, $serverInstallId);
+                        }
+                    }
+
                     $ttl = config('license.verify_ttl_hours', 24) * 60;
                     Cache::put($cacheKey, $result, $ttl);
 
                     if (!empty($result['data']['token'])) {
                         Cache::put('license_token', $result['data']['token'], $ttl);
                     }
+
+                    $this->binding->touch();
                 } else {
                     $ttl = config('license.failure_cache_ttl_minutes', 5);
                     Cache::put($cacheKey, $result, $ttl);
@@ -108,9 +139,66 @@ class LicenseService
         ];
     }
 
+    private function blockNotBound($previousResult = null): array
+    {
+        $result = [
+            'status' => 'error',
+            'code' => 403,
+            'message' => 'License belum terikat (bound) ke server ini. Silakan lakukan aktivasi pindah server.',
+            'license_error' => true,
+            'binding_required' => true,
+        ];
+
+        $this->rememberBlockedResponse($result);
+        Log::warning('License binding missing for current machine', [
+            'license_key' => $this->licenseKey,
+            'install_id' => $this->binding->getInstallId(),
+        ]);
+
+        return $result;
+    }
+
+    private function blockInstallMismatch(array $result, string $serverInstallId): array
+    {
+        $blocked = [
+            'status' => 'error',
+            'code' => 403,
+            'message' => 'License terikat pada server lain. Aplikasi tidak dapat dijalankan di server ini.',
+            'license_error' => true,
+            'binding_required' => true,
+            'bound_to_other_machine' => true,
+            'data' => $result['data'] ?? null,
+        ];
+
+        Cache::put('license_verify_' . md5($this->binding->getMachineFingerprint()), $blocked, now()->addDays(7));
+        $this->rememberBlockedResponse($blocked);
+
+        Log::warning('License install_id mismatch (moved to new server)', [
+            'server_install_id' => $serverInstallId,
+            'local_install_id' => $this->binding->getInstallId(),
+        ]);
+
+        return $blocked;
+    }
+
+    private function getCachedBlockedResponse(): ?array
+    {
+        $key = 'license_block_' . md5($this->licenseKey . '|' . $this->binding->getInstallId());
+        $cached = Cache::get($key);
+        return is_array($cached) ? $cached : null;
+    }
+
+    private function rememberBlockedResponse(array $response): void
+    {
+        $key = 'license_block_' . md5($this->licenseKey . '|' . $this->binding->getInstallId());
+        Cache::put($key, $response, now()->addDays(7));
+    }
+
     private function doVerify(string $fingerprint, string $domain, string $username): array
     {
         try {
+            $installInfo = $this->binding->getInstallInfo();
+
             $response = Http::timeout(15)
                 ->withHeaders([
                     'X-API-Key' => $this->apiKey,
@@ -121,10 +209,15 @@ class LicenseService
                     'fingerprint' => $fingerprint,
                     'platform' => $this->platform,
                     'domain' => $domain,
+                    'install_id' => $installInfo['install_id'],
+                    'machine_fingerprint' => $installInfo['machine_fingerprint'],
                     'device_info' => [
                         'username' => $username,
                         'php_version' => phpversion(),
                         'app_name' => config('app.name', 'eCatalog'),
+                        'mac_address' => $installInfo['mac_address'],
+                        'hostname' => $installInfo['hostname'],
+                        'os' => $installInfo['os'],
                     ],
                 ]);
 
@@ -153,11 +246,13 @@ class LicenseService
             ];
         }
 
-        $fingerprint = $fingerprint ?? $this->generateFingerprint($domain, $username);
+        $fingerprint = $fingerprint ?? $this->binding->getMachineFingerprint();
         $domain = $domain ?? $this->getDomain();
         $username = $username ?? $this->getUsername();
 
         try {
+            $installInfo = $this->binding->getInstallInfo();
+
             $response = Http::timeout(15)
                 ->withHeaders([
                     'X-API-Key' => $this->apiKey,
@@ -168,19 +263,30 @@ class LicenseService
                     'fingerprint' => $fingerprint,
                     'platform' => $this->platform,
                     'domain' => $domain,
+                    'install_id' => $installInfo['install_id'],
+                    'machine_fingerprint' => $installInfo['machine_fingerprint'],
                     'device_info' => [
                         'username' => $username,
                         'php_version' => phpversion(),
                         'app_name' => config('app.name', 'eCatalog'),
+                        'mac_address' => $installInfo['mac_address'],
+                        'hostname' => $installInfo['hostname'],
+                        'os' => $installInfo['os'],
                     ],
                 ]);
 
             $result = $response->json();
             $result['http_code'] = $response->status();
 
-            if ($response->successful() && ($result['status'] ?? '') === 'success' && !empty($result['data']['token'])) {
+            if ($response->successful() && ($result['status'] ?? '') === 'success') {
                 $ttl = config('license.verify_ttl_hours', 24) * 60;
-                Cache::put('license_token', $result['data']['token'], $ttl);
+                if (!empty($result['data']['token'])) {
+                    Cache::put('license_token', $result['data']['token'], $ttl);
+                }
+                $this->binding->bind($this->licenseKey, [
+                    'domain' => $domain,
+                    'username' => $username,
+                ]);
             }
 
             return $result;
@@ -205,11 +311,12 @@ class LicenseService
             ];
         }
 
-        $fingerprint = $fingerprint ?? $this->generateFingerprint($domain, $username);
+        $fingerprint = $fingerprint ?? $this->binding->getMachineFingerprint();
         $domain = $domain ?? $this->getDomain();
         $username = $username ?? $this->getUsername();
 
         try {
+            $installInfo = $this->binding->getInstallInfo();
             $token = Cache::get('license_token');
 
             $headers = [
@@ -228,10 +335,15 @@ class LicenseService
                     'fingerprint' => $fingerprint,
                     'platform' => $this->platform,
                     'domain' => $domain,
+                    'install_id' => $installInfo['install_id'],
+                    'machine_fingerprint' => $installInfo['machine_fingerprint'],
                     'device_info' => [
                         'username' => $username,
                         'php_version' => phpversion(),
                         'app_name' => config('app.name', 'eCatalog'),
+                        'mac_address' => $installInfo['mac_address'],
+                        'hostname' => $installInfo['hostname'],
+                        'os' => $installInfo['os'],
                     ],
                 ]);
 
@@ -241,6 +353,7 @@ class LicenseService
             if ($response->successful()) {
                 Cache::forget('license_token');
                 Cache::forget('license_verify_' . md5($fingerprint));
+                $this->binding->unbind($this->licenseKey, 'deactivate_called');
             }
 
             return $result;
@@ -257,10 +370,7 @@ class LicenseService
 
     public function generateFingerprint(?string $domain = null, ?string $username = null): string
     {
-        $domain = $domain ?? $this->getDomain();
-        $username = $username ?? $this->getUsername() ?? '';
-
-        return hash('sha256', $domain . '|' . $username);
+        return $this->binding->getMachineFingerprint();
     }
 
     public function getCachedToken(): ?string
@@ -270,10 +380,7 @@ class LicenseService
 
     public function clearCache(): void
     {
-        Cache::forget('license_token');
-        $fingerprint = $this->generateFingerprint();
-        Cache::forget('license_verify_' . md5($fingerprint));
-        Cache::forget('license_status_' . md5($this->licenseKey));
+        $this->binding->clearVerifyCache();
     }
 
     public function applySuspended(string $licenseKey, ?string $suspendedAt = null): void
@@ -286,7 +393,7 @@ class LicenseService
 
         Cache::put('license_status_' . md5($licenseKey), $payload, now()->addDays(7));
 
-        $fingerprint = $this->generateFingerprint();
+        $fingerprint = $this->binding->getMachineFingerprint();
         Cache::forget('license_verify_' . md5($fingerprint));
         Cache::forget('license_token');
 
@@ -304,7 +411,20 @@ class LicenseService
     {
         Cache::forget('license_status_' . md5($licenseKey));
 
-        $fingerprint = $this->generateFingerprint();
+        $fingerprint = $this->binding->getMachineFingerprint();
+        Cache::forget('license_verify_' . md5($fingerprint));
+        Cache::forget('license_token');
+    }
+
+    public function applyRebound(string $licenseKey, string $installId, ?string $reason = null): void
+    {
+        Cache::put('license_rebound_' . md5($licenseKey), [
+            'install_id' => $installId,
+            'reason' => $reason,
+            'timestamp' => now()->toDateTimeString(),
+        ], now()->addDays(30));
+
+        $fingerprint = $this->binding->getMachineFingerprint();
         Cache::forget('license_verify_' . md5($fingerprint));
         Cache::forget('license_token');
     }

@@ -11,4 +11,6 @@ return [
     'grace_period_hours' => env('LICENSE_GRACE_PERIOD_HOURS', 0),
     'failure_cache_ttl_minutes' => env('LICENSE_FAILURE_CACHE_TTL_MINUTES', 5),
     'webhook_secret' => env('LICENSE_WEBHOOK_SECRET', ''),
+    'enforce_binding' => env('LICENSE_ENFORCE_BINDING', true),
+    'transfer_token' => env('LICENSE_TRANSFER_TOKEN', ''),
 ];
